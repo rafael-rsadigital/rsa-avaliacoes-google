@@ -79,9 +79,9 @@ async function supabaseRequest(path, options = {}) {
 
 export async function saveRefreshToken(refreshToken) {
   const encrypted = encryptSecret(refreshToken);
-  const rows = await supabaseRequest("google_oauth_tokens?id=eq=primary&select=id", { method: "GET" });
+  const rows = await supabaseRequest("google_oauth_tokens?id=eq.primary&select=id", { method: "GET" });
   if (rows?.length) {
-    await supabaseRequest("google_oauth_tokens?id=eq=primary", {
+    await supabaseRequest("google_oauth_tokens?id=eq.primary", {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
       body: JSON.stringify({ encrypted_refresh_token: encrypted, updated_at: new Date().toISOString() })
@@ -96,7 +96,7 @@ export async function saveRefreshToken(refreshToken) {
 }
 
 async function loadRefreshToken() {
-  const rows = await supabaseRequest("google_oauth_tokens?id=eq=primary&select=encrypted_refresh_token", { method: "GET" });
+  const rows = await supabaseRequest("google_oauth_tokens?id=eq.primary&select=encrypted_refresh_token", { method: "GET" });
   if (!rows?.length) throw new Error("Conta Google ainda não conectada. Abra /api/google/connect para autorizar.");
   return decryptSecret(rows[0].encrypted_refresh_token);
 }
