@@ -13,8 +13,10 @@ export default async function handler(req, res) {
     const code = req.query?.code;
     if (!code) throw new Error("O Google não retornou o código de autorização.");
     await exchangeGoogleCode(code, process.env.GOOGLE_REDIRECT_URI);
-    return res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(page("Google conectado à RSA Digital", "A autorização foi concluída e o token de atualização foi armazenado criptografado.", true));
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(page("Google conectado à RSA Digital", "A autorização foi concluída e o token de atualização foi armazenado criptografado.", true));
   } catch (error) {
-    return res.status(400).setHeader("Content-Type", "text/html; charset=utf-8").send(page("Não foi possível conectar", error.message));
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(400).send(page("Não foi possível conectar", error.message));
   }
 }
