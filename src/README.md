@@ -31,7 +31,7 @@ Mantenha a variável existente:
 Adicione:
 
 - `GOOGLE_CLIENT_SECRET`: segredo do mesmo OAuth Client ID (Google Cloud Console).
-- `GOOGLE_REDIRECT_URI`: URL exata `https://rsa-avaliacoes-google.vercel.app/api/google/callback`.
+- `GOOGLE_REDIRECT_URI`: URL exata `https://rsa-avaliacoes-google-rsadigital.vercel.app/api/google/callback`.
 - `GOOGLE_CONNECT_SECRET`: senha longa para iniciar a conexão Google em `/api/google/connect`.
 - `OAUTH_STATE_SECRET`: segredo aleatório longo usado para assinar o estado OAuth.
 - `TOKEN_ENCRYPTION_KEY`: chave base64 de exatamente 32 bytes para criptografar o refresh token.
@@ -53,7 +53,7 @@ Use uma chave diferente para cada variável. Para `TOKEN_ENCRYPTION_KEY`, use a 
 No OAuth Client ID do tipo Aplicativo da Web, adicione aos URIs de redirecionamento autorizados:
 
 ```
-https://rsa-avaliacoes-google.vercel.app/api/google/callback
+https://rsa-avaliacoes-google-rsadigital.vercel.app/api/google/callback
 ```
 
 O escopo utilizado é `https://www.googleapis.com/auth/business.manage`. O fluxo solicita acesso offline e consentimento para obter refresh token.
@@ -61,7 +61,7 @@ O escopo utilizado é `https://www.googleapis.com/auth/business.manage`. O fluxo
 ## Conectar a conta Google
 
 1. Configure todas as variáveis de ambiente acima na Vercel.
-2. Abra `https://rsa-avaliacoes-google.vercel.app/api/google/connect`.
+2. Abra `https://rsa-avaliacoes-google-rsadigital.vercel.app/api/google/connect`.
 3. Informe o valor de `GOOGLE_CONNECT_SECRET` no formulário.
 4. Autorize a conta Google que gerencia as fichas.
 5. Confirme a página de sucesso.
@@ -73,7 +73,7 @@ O refresh token é criptografado antes de ser enviado ao Supabase.
 No Claude: Customize → Connectors → Add custom connector.
 
 - Nome: RSA Digital – Avaliações Google
-- URL: `https://rsa-avaliacoes-google.vercel.app/api/mcp`
+- URL: `https://rsa-avaliacoes-google-rsadigital.vercel.app/api/mcp`
 - Autenticação: sem OAuth (No sign in), com cabeçalho fixo.
 - Cabeçalho: `Authorization`
 - Valor: `Bearer <MCP_API_KEY>`
