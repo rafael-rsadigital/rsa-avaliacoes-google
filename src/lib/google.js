@@ -73,7 +73,10 @@ async function supabaseRequest(path, options = {}) {
   });
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(data?.message || data?.error_description || "Falha ao acessar o armazenamento seguro.");
+  if (!response.ok) {
+    const detail = [data?.message, data?.hint, data?.details].filter(Boolean).join(" — ");
+    throw new Error(detail || data?.error_description || "Falha ao acessar o armazenamento seguro.");
+  }
   return data;
 }
 
