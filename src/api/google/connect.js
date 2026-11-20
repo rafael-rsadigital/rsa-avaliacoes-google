@@ -7,8 +7,10 @@ function html(message) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (req.method === "GET") res.setHeader("Content-Type", "text/html; charset=utf-8");
-  return res.status(200).send(html("Informe a chave de configuração definida na Vercel para iniciar a autorização."));
+  if (req.method === "GET") {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(html("Informe a chave de configuração definida na Vercel para iniciar a autorização."));
+  }
   if (req.method !== "POST") return res.status(405).send("Método não permitido.");
   const form = typeof req.body === "object" ? req.body : {};
   if (!safeEqual(form.key, process.env.GOOGLE_CONNECT_SECRET)) return res.status(401).send(html("Chave incorreta. Tente novamente."));
