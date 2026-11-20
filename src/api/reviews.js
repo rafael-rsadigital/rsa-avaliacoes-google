@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
-  const token = (req.headers.authorization || "").replace(/^Bearer\\s+/i, "");
+  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   const suppliedLocationName = req.body?.locationName;
 
   if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     // A Business Information API returns locations/{id}, while the Reviews API
     // requires accounts/{accountId}/locations/{locationId}. Resolve the account
     // when the frontend sends the shorter location resource name.
-    if (/^locations\\/[^/]+$/.test(locationName)) {
+    if (/^locations\/[^/]+$/.test(locationName)) {
       const accountsUrl = new URL("https://mybusinessaccountmanagement.googleapis.com/v1/accounts");
       const accounts = [];
       let accountPageToken = "";
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       locationName = resolvedName;
     }
 
-    if (!/^accounts\\/[^/]+\\/locations\\/[^/]+$/.test(locationName)) {
+    if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName)) {
       return res.status(400).json({ message: "Ficha inválida." });
     }
 
