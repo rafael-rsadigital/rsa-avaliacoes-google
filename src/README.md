@@ -15,4 +15,7 @@ Aplicação simples para consultar avaliações do Google Business Profile e pub
 4. Adicione a variável de ambiente GOOGLE_CLIENT_ID na Vercel.
 5. Ative Business Information API e Google My Business API no projeto Google Cloud.
 
+## Implantação na Vercel
+O diretório raiz do projeto na Vercel deve permanecer configurado como `src`, pois é nele que ficam o `index.html` e a pasta `api`.
+
 O token é solicitado a cada sessão e expira. O usuário pode reconectar quando necessário.
