@@ -301,6 +301,9 @@ export default async function handler(req, res) {
       case "performance":
         result = await performance(body);
         break;
+      case "search-keywords":
+        result = await searchKeywords(body);
+        break;
       case "categories":
         result = await categories(body);
         break;
