@@ -173,12 +173,20 @@ async function createLocation(body) {
   }
 
   const token = await getGoogleAccessToken(accountKey);
-  const accountsResponse = await fetch("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
-    headers: { Authorization: "Bearer " + token }, cache: "no-store"
-  });
-  const accountsData = await accountsResponse.json().catch(() => ({}));
-  if (!accountsResponse.ok) return { status: accountsResponse.status, data: { message: accountsData.error?.message || "Não foi possível validar a conta comercial." } };
-  if (!(accountsData.accounts || []).some(account => account.name === parent)) {
+  const availableAccounts = [];
+  let accountPageToken = "";
+  do {
+    const accountsUrl = new URL("https://mybusinessaccountmanagement.googleapis.com/v1/accounts");
+    if (accountPageToken) accountsUrl.searchParams.set("pageToken", accountPageToken);
+    const accountsResponse = await fetch(accountsUrl, {
+      headers: { Authorization: "Bearer " + token }, cache: "no-store"
+    });
+    const accountsData = await accountsResponse.json().catch(() => ({}));
+    if (!accountsResponse.ok) return { status: accountsResponse.status, data: { message: accountsData.error?.message || "Não foi possível validar a conta comercial." } };
+    availableAccounts.push(...(accountsData.accounts || []));
+    accountPageToken = accountsData.nextPageToken || "";
+  } while (accountPageToken);
+  if (!availableAccounts.some(account => account.name === parent)) {
     return { status: 403, data: { message: "A conta comercial selecionada não pertence à autorização escolhida." } };
   }
 
