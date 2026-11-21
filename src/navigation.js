@@ -135,7 +135,10 @@
       : "Conecte uma conta Google para carregar as fichas disponíveis.";
   }
 
+  const refreshReviewsButton = document.getElementById("refreshBtn");
+
   function setView(view) {
+    if (refreshReviewsButton) refreshReviewsButton.classList.toggle("hidden", view !== "reviews");
     sidebar.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === view));
     dashboard.classList.toggle("nav-section-hidden", view !== "overview");
     placeholder.classList.toggle("nav-section-hidden", !descriptions[view]);
