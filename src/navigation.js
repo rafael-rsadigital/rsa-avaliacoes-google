@@ -114,10 +114,10 @@
       items: ["Escolher a conta Google que será proprietária", "Preencher nome, categoria, endereço ou área de atendimento", "Criar a ficha e acompanhar as etapas posteriores de verificação"]
     },
     accounts: {
-      kicker: "Módulo em desenvolvimento",
+      kicker: "Acesso e autorizações",
       title: "Contas Google",
-      text: "A conexão de contas adicionais continua funcionando pelo fluxo seguro já existente. Esta tela futuramente facilitará a visualização das contas conectadas e das fichas associadas.",
-      items: ["Listar contas autorizadas e seus rótulos", "Identificar fichas vinculadas a cada conta", "Orientar a reconexão quando uma autorização expirar"]
+      text: "Consulte as contas autorizadas e as fichas acessíveis por cada uma. A consulta usa a chave administrativa no servidor; tokens de acesso e atualização nunca são enviados ao navegador.",
+      items: ["Visualizar contas conectadas e seus rótulos", "Conferir quantas fichas cada conta consegue acessar", "Adicionar novas contas pelo fluxo OAuth seguro"]
     }
   };
 
@@ -252,6 +252,150 @@
     placeholder.append(section);
   }
 
+  function renderAccounts() {
+    placeholder.innerHTML = "";
+    const section = document.createElement("div");
+    section.className = "accounts-panel";
+    const heading = document.createElement("div");
+    heading.className = "companies-heading";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "nav-placeholder-kicker";
+    kicker.textContent = "Acesso e autorizações";
+    const title = document.createElement("h2");
+    title.textContent = "Contas Google conectadas";
+    const description = document.createElement("p");
+    description.textContent = "A chave de configuração autoriza esta consulta administrativa. Ela é enviada somente ao servidor e não fica salva no navegador.";
+    copy.append(kicker, title, description);
+    heading.append(copy);
+    section.append(heading);
+
+    const form = document.createElement("div");
+    form.className = "accounts-access";
+    const key = document.createElement("input");
+    key.type = "password";
+    key.autocomplete = "current-password";
+    key.placeholder = "Chave de configuração (GOOGLE_CONNECT_SECRET)";
+    key.setAttribute("aria-label", "Chave de configuração Google");
+    const refresh = document.createElement("button");
+    refresh.type = "button";
+    refresh.className = "btn primary";
+    refresh.textContent = "Consultar contas";
+    form.append(key, refresh);
+    section.append(form);
+
+    const message = document.createElement("div");
+    message.className = "accounts-message";
+    message.setAttribute("aria-live", "polite");
+    section.append(message);
+
+    const actions = document.createElement("div");
+    actions.className = "accounts-footer";
+    const add = document.createElement("a");
+    add.className = "btn secondary";
+    add.href = "/api/google/connect";
+    add.target = "_blank";
+    add.rel = "noopener noreferrer";
+    add.textContent = "Adicionar outra conta Google";
+    const note = document.createElement("span");
+    note.textContent = "A autorização abre em uma nova aba.";
+    actions.append(add, note);
+    section.append(actions);
+
+    const list = document.createElement("div");
+    list.className = "accounts-list";
+    section.append(list);
+    let busy = false;
+
+    async function load() {
+      const secret = key.value.trim();
+      if (!secret) {
+        message.className = "accounts-message is-error";
+        message.textContent = "Informe a chave de configuração para consultar as contas.";
+        key.focus();
+        return;
+      }
+      if (busy) return;
+      busy = true;
+      refresh.disabled = true;
+      refresh.textContent = "Consultando…";
+      message.className = "accounts-message";
+      message.textContent = "Consultando as autorizações e fichas no Google…";
+      list.innerHTML = "";
+      try {
+        const response = await fetch("/api/google/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: secret })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível consultar as contas.");
+        const accounts = data.accounts || [];
+        message.className = "accounts-message is-success";
+        message.textContent = accounts.length
+          ? accounts.length + (accounts.length === 1 ? " conta autorizada encontrada." : " contas autorizadas encontradas.")
+          : "Nenhuma conta adicional cadastrada. Conecte a conta principal ou adicione outra.";
+        if (!accounts.length) {
+          const empty = document.createElement("div");
+          empty.className = "companies-empty";
+          empty.textContent = "Nenhuma autorização encontrada no armazenamento seguro.";
+          list.append(empty);
+        }
+        accounts.forEach(account => {
+          const card = document.createElement("article");
+          card.className = "account-card";
+          const info = document.createElement("div");
+          info.className = "company-info";
+          const name = document.createElement("h3");
+          name.textContent = account.label || "Conta Google";
+          const meta = document.createElement("p");
+          const date = account.createdAt ? new Date(account.createdAt).toLocaleDateString("pt-BR") : "Data não disponível";
+          meta.textContent = "Conectada em " + date + " · " + account.locationCount + (account.locationCount === 1 ? " ficha" : " fichas");
+          info.append(name, meta);
+          const status = document.createElement("span");
+          status.className = "account-status " + (account.status === "connected" ? "is-connected" : "is-error");
+          status.textContent = account.status === "connected" ? "Autorização ativa" : "Falha na consulta";
+          card.append(info, status);
+          if (account.status === "error") {
+            const error = document.createElement("p");
+            error.className = "account-error";
+            error.textContent = account.message || "Verifique a autorização desta conta.";
+            card.append(error);
+          } else if (account.locations?.length) {
+            const details = document.createElement("details");
+            details.className = "account-locations";
+            const summary = document.createElement("summary");
+            summary.textContent = "Ver fichas desta conta (" + account.locations.length + ")";
+            details.append(summary);
+            const locationList = document.createElement("ul");
+            account.locations.forEach(location => {
+              const item = document.createElement("li");
+              const business = document.createElement("strong");
+              business.textContent = location.title || "Empresa sem nome";
+              const address = document.createElement("span");
+              address.textContent = formatAddress(location.address);
+              item.append(business, address);
+              locationList.append(item);
+            });
+            details.append(locationList);
+            card.append(details);
+          }
+          list.append(card);
+        });
+      } catch (error) {
+        message.className = "accounts-message is-error";
+        message.textContent = error.message || "Falha ao consultar as contas.";
+      } finally {
+        busy = false;
+        refresh.disabled = false;
+        refresh.textContent = "Consultar contas";
+      }
+    }
+    refresh.addEventListener("click", load);
+    key.addEventListener("keydown", event => { if (event.key === "Enter") load(); });
+    placeholder.append(section);
+  }
+
   const refreshReviewsButton = document.getElementById("refreshBtn");
 
   function setView(view) {
@@ -264,6 +408,7 @@
       placeholder.innerHTML = `<div class="nav-placeholder-card"><div class="nav-placeholder-kicker">${item.kicker}</div><h2>${item.title}</h2><p>${item.text}</p><ul class="nav-placeholder-list">${item.items.map(value => "<li>" + value + "</li>").join("")}</ul></div>`;
     }
     if (view === "companies") renderCompanies();
+    if (view === "accounts") renderAccounts();
     if (view === "reviews" || view === "publications") {
       if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
       if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
