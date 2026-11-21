@@ -80,31 +80,68 @@ async function supabaseRequest(path, options = {}) {
   return data;
 }
 
-export async function saveRefreshToken(refreshToken) {
+export async function listGoogleOAuthAccounts() {
+  const rows = await supabaseRequest(
+    "google_oauth_accounts?select=id,label,created_at,updated_at&order=created_at.asc",
+    { method: "GET" }
+  );
+  return (rows || []).map((row) => ({
+    id: row.id,
+    label: row.label,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  }));
+}
+
+export async function saveRefreshToken(refreshToken, accountKey = "primary", label = "Conta Google principal") {
   const encrypted = encryptSecret(refreshToken);
-  const rows = await supabaseRequest("google_oauth_tokens?id=eq.primary&select=id", { method: "GET" });
-  if (rows?.length) {
-    await supabaseRequest("google_oauth_tokens?id=eq.primary", {
-      method: "PATCH",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ encrypted_refresh_token: encrypted, updated_at: new Date().toISOString() })
-    });
-  } else {
-    await supabaseRequest("google_oauth_tokens", {
-      method: "POST",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ id: "primary", encrypted_refresh_token: encrypted })
-    });
+  await supabaseRequest("google_oauth_accounts?on_conflict=id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      id: accountKey,
+      label,
+      encrypted_refresh_token: encrypted,
+      updated_at: new Date().toISOString()
+    })
+  });
+}
+
+async function loadRefreshToken(accountKey) {
+  const rows = await supabaseRequest(
+    "google_oauth_accounts?id=eq." + encodeURIComponent(accountKey) + "&select=encrypted_refresh_token",
+    { method: "GET" }
+  );
+  if (rows?.length) return decryptSecret(rows[0].encrypted_refresh_token);
+
+  // Compatibilidade e recuperação: mantém leitura da tabela antiga para a conta principal.
+  if (accountKey === "primary") {
+    const legacyRows = await supabaseRequest(
+      "google_oauth_tokens?id=eq.primary&select=encrypted_refresh_token",
+      { method: "GET" }
+    );
+    if (legacyRows?.length) return decryptSecret(legacyRows[0].encrypted_refresh_token);
   }
+  throw new Error("Conta Google não encontrada. Use list_google_accounts para consultar as contas conectadas.");
 }
 
-async function loadRefreshToken() {
-  const rows = await supabaseRequest("google_oauth_tokens?id=eq.primary&select=encrypted_refresh_token", { method: "GET" });
-  if (!rows?.length) throw new Error("Conta Google ainda não conectada. Abra /api/google/connect para autorizar.");
-  return decryptSecret(rows[0].encrypted_refresh_token);
+async function resolveGoogleAccountKey(accountKey) {
+  if (accountKey) {
+    const accounts = await listGoogleOAuthAccounts();
+    if (!accounts.some((account) => account.id === accountKey)) {
+      throw new Error("Conta Google não encontrada. Use list_google_accounts para consultar as contas conectadas.");
+    }
+    return accountKey;
+  }
+
+  const accounts = await listGoogleOAuthAccounts();
+  if (!accounts.length) throw new Error("Nenhuma conta Google conectada. Abra /api/google/connect para autorizar.");
+  if (accounts.some((account) => account.id === "primary")) return "primary";
+  if (accounts.length === 1) return accounts[0].id;
+  throw new Error("Há várias contas Google conectadas. Informe o accountKey retornado por list_google_accounts.");
 }
 
-export async function exchangeGoogleCode(code, redirectUri) {
+export async function exchangeGoogleCode(code, redirectUri, account = {}) {
   const response = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -119,11 +156,16 @@ export async function exchangeGoogleCode(code, redirectUri) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error_description || data.error || "Não foi possível concluir a autorização Google.");
   if (!data.refresh_token) throw new Error("O Google não retornou refresh token. Revogue o acesso anterior do app RSA Digital e tente conectar novamente com consentimento.");
-  await saveRefreshToken(data.refresh_token);
+  await saveRefreshToken(
+    data.refresh_token,
+    account.accountKey || "primary",
+    account.label || "Conta Google principal"
+  );
 }
 
-export async function getGoogleAccessToken() {
-  const refreshToken = await loadRefreshToken();
+export async function getGoogleAccessToken(accountKey) {
+  const resolvedKey = await resolveGoogleAccountKey(accountKey);
+  const refreshToken = await loadRefreshToken(resolvedKey);
   const response = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
