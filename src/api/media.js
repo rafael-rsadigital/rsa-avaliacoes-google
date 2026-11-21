@@ -1,3 +1,5 @@
+import { resolveGoogleLocationName } from "../lib/resolve-google-location.js";
+
 const CATEGORIES = new Set(["ADDITIONAL","EXTERIOR","INTERIOR","PRODUCT","AT_WORK","FOOD_AND_DRINK","MENU","COMMON_AREA","ROOMS","TEAMS"]);
 
 function validPublicImageUrl(value) {
@@ -18,12 +20,13 @@ export default async function handler(req, res) {
   const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   const { locationName, sourceUrl, category = "ADDITIONAL" } = req.body || {};
   if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
-  if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
+  if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "") && !/^locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!CATEGORIES.has(category)) return res.status(400).json({ message: "Categoria de foto inválida." });
 
   try {
-    const response = await fetch("https://mybusiness.googleapis.com/v4/" + locationName + "/media", {
+    const resolvedLocationName = await resolveGoogleLocationName(token, locationName);
+    const response = await fetch("https://mybusiness.googleapis.com/v4/" + resolvedLocationName + "/media", {
       method: "POST",
       headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
       body: JSON.stringify({

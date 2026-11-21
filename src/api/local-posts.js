@@ -1,3 +1,5 @@
+import { resolveGoogleLocationName } from "../lib/resolve-google-location.js";
+
 const ACTIONS = new Set(["BOOK","ORDER","SHOP","LEARN_MORE","SIGN_UP","CALL"]);
 
 function validPublicImageUrl(value) {
@@ -27,7 +29,7 @@ export default async function handler(req, res) {
   const text = typeof summary === "string" ? summary.trim() : "";
 
   if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
-  if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
+  if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "") && !/^locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!text || text.length > 1500) return res.status(400).json({ message: "O texto da atualização deve ter entre 1 e 1.500 caracteres." });
 
@@ -49,7 +51,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch("https://mybusiness.googleapis.com/v4/" + locationName + "/localPosts", {
+    const resolvedLocationName = await resolveGoogleLocationName(token, locationName);
+    const response = await fetch("https://mybusiness.googleapis.com/v4/" + resolvedLocationName + "/localPosts", {
       method: "POST",
       headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
       body: JSON.stringify(post),
