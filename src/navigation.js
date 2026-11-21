@@ -98,7 +98,7 @@
   function updateCompanySummary() {
     const summary = document.getElementById("navCompanySummary");
     if (!summary) return;
-    const count = Array.isArray(window.locations) ? window.locations.length : 0;
+    const count = typeof locations !== "undefined" && Array.isArray(locations) ? locations.length : 0;
     summary.textContent = count
       ? count + " ficha(s) carregada(s) nesta sessão. Use o seletor de empresa para escolher a ficha."
       : "Conecte uma conta Google para carregar as fichas disponíveis.";
@@ -113,6 +113,8 @@
       placeholder.innerHTML = `<div class="nav-placeholder-card"><div class="nav-placeholder-kicker">${item.kicker}</div><h2>${item.title}</h2><p>${item.text}</p><ul class="nav-placeholder-list">${item.items.map(value => "<li>" + value + "</li>").join("")}</ul></div>`;
     }
     if (view === "reviews" || view === "publications") {
+      if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
+      if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
       dashboard.classList.add("nav-section-hidden");
       placeholder.classList.add("nav-section-hidden");
       if (typeof window.showMainSection === "function") window.showMainSection(view);
