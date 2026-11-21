@@ -309,7 +309,7 @@
 
     const warning = document.createElement("p");
     warning.className = "create-company-warning";
-    warning.textContent = "A criação não garante publicação imediata. O Google pode exigir verificação. Para empresas que atendem no endereço do cliente, informe os Place IDs das cidades ou regiões atendidas; o endereço de verificação será tratado pelo Google."
+    warning.textContent = "A criação não garante publicação imediata. Empresas que atendem somente no endereço do cliente não exibem endereço público, mas o Google pode solicitar um endereço de verificação no Brasil, onde o responsável possa receber correspondência."
     section.append(warning);
 
     const form = document.createElement("div");
@@ -361,7 +361,13 @@
     serviceAreaPlaceIds.maxLength = 4000;
     serviceAreaPlaceIds.placeholder = "Um Place ID por linha (ex.: ChIJ...)";
     const serviceAreaHelp = document.createElement("small");
-    serviceAreaHelp.textContent = "Use Place IDs do Google Maps, não apenas nomes de cidades. É possível informar até 20 áreas, uma por linha.";
+    serviceAreaHelp.textContent = "Use Place IDs de cidades ou regiões do Google Maps, não apenas nomes. Até 20 áreas, uma por linha. ";
+    const placeIdHelp = document.createElement("a");
+    placeIdHelp.href = "https://developers.google.com/maps/documentation/places/web-service/place-id";
+    placeIdHelp.target = "_blank";
+    placeIdHelp.rel = "noopener noreferrer";
+    placeIdHelp.textContent = "Como encontrar um Place ID";
+    serviceAreaHelp.append(placeIdHelp);
     serviceAreaWrap.append(serviceAreaLabel, serviceAreaPlaceIds, serviceAreaHelp);
     form.append(serviceAreaWrap);
     function updateBusinessTypeFields() {
