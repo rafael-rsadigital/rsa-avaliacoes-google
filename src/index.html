@@ -13,7 +13,7 @@
 :root{color-scheme:dark;--bg:#0c1422;--panel:#121f31;--panel2:#17263a;--line:#26374d;--text:#f4f6fa;--muted:#9aabc0;--gold:#e3b64d;--green:#47c58a;--red:#ff7474}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#1c3048 0,transparent 55%),var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;min-height:100vh}
 .wrap{max-width:1120px;margin:auto;padding:32px 22px 64px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:42px}.brand{display:flex;align-items:center;gap:13px}.mark{width:43px;height:43px;border:1px solid #9d854d;border-radius:12px;display:grid;place-items:center;color:var(--gold);font-family:Manrope;font-weight:800;font-size:17px;letter-spacing:-1px}.brand-name{font:800 15px Manrope;letter-spacing:.08em}.brand-sub{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}.status{font-size:12px;color:var(--muted)}h1{font:800 clamp(27px,4vw,38px) Manrope;margin:0 0 9px;letter-spacing:-1.2px}.intro{color:var(--muted);margin:0 0 28px;line-height:1.6}.panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 18px 50px #0002}.login{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.login p{margin:5px 0 0;color:var(--muted);font-size:14px}.btn{border:0;border-radius:10px;padding:12px 17px;font:700 14px "DM Sans";cursor:pointer;transition:.18s}.btn:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--gold);color:#1b1b1b}.primary:hover{filter:brightness(1.08)}.secondary{background:#22354c;color:var(--text);border:1px solid #344a63}.danger{background:#492b35;color:#ffd8dc;border:1px solid #71404b}.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0}.select{flex:1;min-width:250px;background:#0e1a2a;border:1px solid #354960;color:var(--text);padding:13px 14px;border-radius:10px;font:500 14px "DM Sans";outline:none}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 22px}.stat{background:#0e1a2a;border:1px solid var(--line);padding:12px 15px;border-radius:12px;min-width:125px}.stat strong{display:block;font:800 22px Manrope}.stat span{font-size:12px;color:var(--muted)}.filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0 14px}.toggle{display:flex;gap:6px;background:#0e1a2a;padding:4px;border-radius:10px}.toggle button{background:transparent;border:0;color:var(--muted);padding:8px 11px;border-radius:7px;font:600 12px "DM Sans";cursor:pointer}.toggle button.active{background:#263a52;color:white}.review{background:#101d2e;border:1px solid var(--line);border-radius:14px;padding:17px;margin:12px 0}.review-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.reviewer{font-weight:700}.date{font-size:12px;color:var(--muted);white-space:nowrap}.stars{color:var(--gold);letter-spacing:2px;margin:6px 0;font-size:14px}.comment{color:#d9e1eb;line-height:1.6;font-size:14px;white-space:pre-wrap}.reply-existing{margin-top:13px;padding:12px 14px;border-left:2px solid var(--green);background:#122b2a;border-radius:0 9px 9px 0;color:#cde8dc;font-size:13px;line-height:1.55}.reply-existing b{display:block;color:var(--green);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}.reply-area{width:100%;min-height:88px;margin-top:13px;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:12px;color:var(--text);font:14px/1.55 "DM Sans";resize:vertical;outline:none}.reply-area:focus,.select:focus{border-color:var(--gold)}.review-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.hint{font-size:12px;color:var(--muted)}.empty{padding:35px 15px;text-align:center;color:var(--muted);border:1px dashed #34485e;border-radius:14px;margin-top:15px}.notice{display:none;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;line-height:1.5}.notice.show{display:block}.notice.error{background:#3b2029;color:#ffd5da;border:1px solid #713c49}.notice.ok{background:#16352d;color:#c8f1df;border:1px solid #28664f}.notice.info{background:#1b3046;color:#d5e7fa;border:1px solid #355a7d}.foot{text-align:center;color:#70839a;font-size:12px;margin-top:34px}.foot strong{color:#b6c2d0}.hidden{display:none!important}.loading{opacity:.65;pointer-events:none}
-@media(max-width:600px){.wrap{padding:22px 14px 45px}.top{margin-bottom:30px}.panel{padding:17px}.review-head{display:block}.date{display:block;margin-top:5px}.review-actions{align-items:flex-start;flex-direction:column}.review-actions .btn{width:100%}}
+.nav-tabs{display:flex;gap:8px;margin:18px 0 8px;flex-wrap:wrap}.tab{background:#0e1a2a;border:1px solid #344a63;color:var(--muted);padding:10px 15px;border-radius:9px;font:700 13px "DM Sans";cursor:pointer}.tab.active{background:#263a52;color:var(--text);border-color:#60748d}.pub-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:7px;margin:14px 0}.field label{font-size:13px;font-weight:700;color:#dce5ef}.field input,.field select,.field textarea{width:100%;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:12px;color:var(--text);font:14px "DM Sans";outline:none}.field textarea{min-height:115px;resize:vertical;line-height:1.5}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}.pub-preview{display:flex;gap:14px;align-items:center;background:#0e1a2a;border:1px solid var(--line);border-radius:12px;padding:12px;margin:14px 0}.pub-preview img{width:104px;height:84px;object-fit:cover;border-radius:8px;background:#17263a}.pub-preview span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.pub-help{font-size:12px;color:var(--muted);line-height:1.5}.pub-result{margin-top:14px;padding:12px;border-radius:10px;background:#122b2a;color:#cde8dc;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.pub-result a{color:#f0cf78}.section-title{font:700 18px Manrope;margin:8px 0}.field-row{display:flex;gap:12px;align-items:end}.field-row .field{flex:1}@media(max-width:700px){.pub-grid{grid-template-columns:1fr}.field-row{display:block}.pub-preview{align-items:flex-start}}@media(max-width:600px){.wrap{padding:22px 14px 45px}.top{margin-bottom:30px}.panel{padding:17px}.review-head{display:block}.date{display:block;margin-top:5px}.review-actions{align-items:flex-start;flex-direction:column}.review-actions .btn{width:100%}}
 </style>
 </head>
 <body>
@@ -26,10 +26,42 @@
 <div class="login" id="loginBox"><div><strong>Conecte sua conta Google</strong><p>Use a conta que tem acesso de gerente às fichas dos clientes.</p></div><button class="btn primary" id="connectBtn" disabled>Conectar Google</button></div>
 <div id="appBox" class="hidden">
 <div class="toolbar"><select class="select" id="locationSelect"><option value="">Selecione uma empresa</option></select><button class="btn secondary" id="refreshBtn">Atualizar avaliações</button><button class="btn danger" id="disconnectBtn">Sair</button></div>
+<div class="nav-tabs" role="tablist" aria-label="Seções da central">
+<button class="tab active" id="reviewsTab" type="button">Avaliações</button>
+<button class="tab" id="publicationsTab" type="button">Publicações Google</button>
+</div>
+<div id="reviewsSection">
 <div id="notice" class="notice"></div>
 <div class="stats"><div class="stat"><strong id="totalCount">—</strong><span>Avaliações carregadas</span></div><div class="stat"><strong id="pendingCount">—</strong><span>Sem resposta</span></div><div class="stat"><strong id="ratingValue">—</strong><span>Nota média</span></div></div>
 <div class="filters"><strong id="listTitle">Avaliações</strong><div class="toggle"><button class="active" data-filter="pending">Sem resposta</button><button data-filter="all">Todas</button></div></div>
 <div id="reviewsList"></div>
+</div>
+<section id="publicationsSection" class="hidden">
+<div class="section-title">Publicar foto no Google</div>
+<p class="pub-help">Cole o link público gerado pelo Manus. A imagem permanece armazenada no Manus; o RSA Digital envia o link ao Google.</p>
+<div class="field">
+<label for="pubImageUrl">Link público da imagem</label>
+<input id="pubImageUrl" type="url" inputmode="url" placeholder="https://..." autocomplete="url">
+</div>
+<div class="pub-preview"><img id="pubImagePreview" alt="Prévia da imagem" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="><span id="pubImageHint">A prévia da imagem aparecerá aqui quando você inserir o link.</span></div>
+<div class="field">
+<label for="pubDestination">Onde deseja publicar?</label>
+<select id="pubDestination"><option value="gallery">Adicionar à galeria de fotos</option><option value="post">Criar atualização com imagem</option></select>
+</div>
+<div id="galleryFields" class="field">
+<label for="pubCategory">Categoria da foto na galeria</label>
+<select id="pubCategory">
+<option value="ADDITIONAL">Adicional</option><option value="EXTERIOR">Exterior</option><option value="INTERIOR">Interior</option><option value="PRODUCT">Produto</option><option value="AT_WORK">Em atividade / no trabalho</option><option value="FOOD_AND_DRINK">Comida e bebida</option><option value="MENU">Cardápio</option><option value="COMMON_AREA">Área comum</option><option value="ROOMS">Ambientes / quartos</option><option value="TEAMS">Equipe</option><option value="COVER">Capa</option>
+</select>
+</div>
+<div id="postFields" class="hidden">
+<div class="field"><label for="pubSummary">Texto da atualização</label><textarea id="pubSummary" maxlength="1500" placeholder="Escreva o texto que acompanhará a imagem..."></textarea><span class="pub-help"><span id="pubCharCount">0</span>/1.500 caracteres · Tipo de postagem: Atualização padrão.</span></div>
+<div class="field"><label for="pubCta">Botão (opcional)</label><select id="pubCta"><option value="">Sem botão</option><option value="LEARN_MORE">Saiba mais</option><option value="BOOK">Agendar</option><option value="ORDER">Fazer pedido</option><option value="SHOP">Comprar</option><option value="SIGN_UP">Inscrever-se</option><option value="CALL">Ligar</option></select></div>
+<div class="field hidden" id="pubCtaUrlField"><label for="pubCtaUrl">Link do botão (HTTPS)</label><input id="pubCtaUrl" type="url" placeholder="https://seusite.com.br"></div>
+</div>
+<div class="field-row"><button class="btn primary" id="publishMediaBtn" type="button">Revisar e publicar</button></div>
+<div id="pubResult" class="pub-result hidden" role="status" aria-live="polite"></div>
+</section>
 </div>
 </section>
 </main>
@@ -48,6 +80,43 @@ $("locationSelect").onchange=async()=>{const i=$("locationSelect").value;if(i===
 $("refreshBtn").onclick=()=>loadReviews();
 async function loadReviews(){if(!selectedLocation)return;clearNotice();$("reviewsList").innerHTML='<div class="empty">Carregando avaliações…</div>';try{const data=await api("/api/reviews",{locationName:selectedLocation.name});reviews=data.reviews||[];$("totalCount").textContent=data.totalReviewCount??reviews.length;$("pendingCount").textContent=reviews.filter(r=>!r.reviewReply?.comment).length;$("ratingValue").textContent=data.averageRating?Number(data.averageRating).toFixed(1).replace(".",","):"—";render();notice("Avaliações atualizadas diretamente do Google.","ok")}catch(e){$("reviewsList").innerHTML="";notice(e.message,"error")}}
 function render(){const list=$("reviewsList");const filtered=filterMode==="pending"?reviews.filter(r=>!r.reviewReply?.comment):reviews;$("listTitle").textContent=filterMode==="pending"?"Avaliações sem resposta":"Todas as avaliações";list.innerHTML="";if(!selectedLocation){list.innerHTML='<div class="empty">Selecione uma empresa para visualizar as avaliações.</div>';return}if(!filtered.length){list.innerHTML='<div class="empty">'+(filterMode==="pending"?"Nenhuma avaliação pendente nesta ficha.":"Nenhuma avaliação encontrada.")+'</div>';return}filtered.forEach((r)=>{const card=document.createElement("article");card.className="review";const head=document.createElement("div");head.className="review-head";const who=document.createElement("div");const name=document.createElement("div");name.className="reviewer";name.textContent=r.reviewer?.displayName||"Cliente do Google";const stars=document.createElement("div");stars.className="stars";stars.textContent="★".repeat(({FIVE:5,FOUR:4,THREE:3,TWO:2,ONE:1})[r.starRating]||0);who.append(name,stars);const date=document.createElement("div");date.className="date";date.textContent=r.createTime?new Date(r.createTime).toLocaleDateString("pt-BR"):"";head.append(who,date);card.append(head);if(r.comment){const c=document.createElement("div");c.className="comment";c.textContent=r.comment;card.append(c)}if(r.reviewReply?.comment){const reply=document.createElement("div");reply.className="reply-existing";const label=document.createElement("b");label.textContent="Resposta publicada";reply.append(label,document.createTextNode(r.reviewReply.comment));card.append(reply)}else{const area=document.createElement("textarea");area.className="reply-area";area.placeholder="Escreva a resposta que será publicada no Google…";area.maxLength=4096;area.setAttribute("aria-label","Resposta para "+(r.reviewer?.displayName||"avaliação"));const actions=document.createElement("div");actions.className="review-actions";const hint=document.createElement("span");hint.className="hint";hint.textContent="A resposta será publicada imediatamente no Perfil da Empresa.";const btn=document.createElement("button");btn.className="btn primary";btn.textContent="Publicar resposta";btn.onclick=async()=>{const comment=area.value.trim();if(!comment){area.focus();return}if(!confirm("Publicar esta resposta no Google?"))return;btn.disabled=true;btn.textContent="Publicando…";try{await api("/api/reply",{reviewName:r.name,comment});r.reviewReply={comment};render();$("pendingCount").textContent=reviews.filter(x=>!x.reviewReply?.comment).length;notice("Resposta publicada com sucesso no Google.","ok")}catch(e){btn.disabled=false;btn.textContent="Publicar resposta";notice(e.message,"error")}};actions.append(hint,btn);card.append(area,actions)}list.append(card)})}
+
+function showMainSection(section){const isReviews=section==="reviews";$("reviewsSection").classList.toggle("hidden",!isReviews);$("publicationsSection").classList.toggle("hidden",isReviews);$("reviewsTab").classList.toggle("active",isReviews);$("publicationsTab").classList.toggle("active",!isReviews);clearNotice()}
+$("reviewsTab").onclick=()=>showMainSection("reviews");
+$("publicationsTab").onclick=()=>showMainSection("publications");
+$("pubDestination").onchange=()=>{const post=$("pubDestination").value==="post";$("galleryFields").classList.toggle("hidden",post);$("postFields").classList.toggle("hidden",!post);$("pubResult").classList.add("hidden")};
+$("pubImageUrl").oninput=()=>{const value=$("pubImageUrl").value.trim();const img=$("pubImagePreview");if(/^https:\\/\\//i.test(value)){img.src=value;$("pubImageHint").textContent=value}else{img.removeAttribute("src");$("pubImageHint").textContent="A prévia da imagem aparecerá aqui quando você inserir um link."}};
+$("pubSummary").oninput=()=>$("pubCharCount").textContent=String($("pubSummary").value.length);
+$("pubCta").onchange=()=>{const needsUrl=$("pubCta").value!==""&&$("pubCta").value!=="CALL";$("pubCtaUrlField").classList.toggle("hidden",!needsUrl)};
+$("publishMediaBtn").onclick=async()=>{
+  if(!selectedLocation){notice("Selecione uma empresa antes de publicar.","error");return}
+  const sourceUrl=$("pubImageUrl").value.trim();
+  let imageUrl;try{imageUrl=new URL(sourceUrl)}catch{notice("Cole um link público válido para a imagem.","error");return}
+  if(imageUrl.protocol!=="https:"){notice("O link da imagem precisa começar com https://.","error");return}
+  const isPost=$("pubDestination").value==="post";
+  const summary=$("pubSummary").value.trim();
+  const actionType=$("pubCta").value;
+  const actionUrl=$("pubCtaUrl").value.trim();
+  if(isPost&&!summary){notice("Escreva o texto da atualização antes de continuar.","error");$("pubSummary").focus();return}
+  if(isPost&&summary.length>1500){notice("O texto ultrapassa o limite de 1.500 caracteres.","error");return}
+  if(isPost&&actionType&&actionType!=="CALL"){let parsed;try{parsed=new URL(actionUrl)}catch{}if(!parsed||parsed.protocol!=="https:"){notice("Informe um link HTTPS válido para o botão.","error");$("pubCtaUrl").focus();return}}
+  const destination=isPost?"uma atualização no Google":"a galeria de fotos do Google";
+  const ctaLabel=actionType?$("pubCta").selectedOptions[0].textContent:"sem botão";
+  const confirmation="Confirma a publicação de "+(isPost?"uma atualização":"uma foto na galeria")+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\\n\\nTexto: "+summary+"\\nBotão: "+ctaLabel:"\\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+"\\n\\nEsta ação publicará o conteúdo no Perfil da Empresa Google.";
+  if(!confirm(confirmation))return;
+  const button=$("publishMediaBtn");button.disabled=true;button.textContent="Publicando…";$("pubResult").classList.add("hidden");clearNotice();
+  try{
+    const result=isPost
+      ?await api("/api/local-posts",{locationName:selectedLocation.name,sourceUrl,summary,callToAction:actionType?{actionType,...(actionType==="CALL"?{}:{url:actionUrl})}:null})
+      :await api("/api/media",{locationName:selectedLocation.name,sourceUrl,category:$("pubCategory").value});
+    const item=isPost?result.post:result.media;
+    const link=item?.searchUrl||item?.googleUrl||"";
+    $("pubResult").textContent=(result.message||"Publicação concluída.")+(item?.name?"\\nIdentificador Google: "+item.name:"")+(link?"\\nLink: "+link:"");
+    $("pubResult").classList.remove("hidden");notice(result.message||"Publicação concluída no Google.","ok");
+  }catch(error){notice(error.message||"Não foi possível publicar no Google.","error")}
+  finally{button.disabled=false;button.textContent="Revisar e publicar"}
+};
+
 document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{filterMode=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()});
 $("disconnectBtn").onclick=()=>{accessToken=null;locations=[];reviews=[];selectedLocation=null;$("appBox").classList.add("hidden");$("loginBox").classList.remove("hidden");$("sessionStatus").textContent="Conexão encerrada";$("connectBtn").disabled=false;clearNotice();$("locationSelect").innerHTML='<option value="">Selecione uma empresa</option>';render()};
 init();
