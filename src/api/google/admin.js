@@ -15,7 +15,8 @@ const METRICS = [
   "BUSINESS_IMPRESSIONS_MOBILE_SEARCH",
   "WEBSITE_CLICKS",
   "CALL_CLICKS",
-  "BUSINESS_DIRECTION_REQUESTS"
+  "BUSINESS_DIRECTION_REQUESTS",
+  "MESSAGING_CLICKS"
 ];
 
 function clean(value, max = 500) {
@@ -122,6 +123,48 @@ async function performance(body) {
   return { status: 200, data: { locationId, startDate, endDate, metrics } };
 }
 
+async function searchKeywords(body) {
+  const accountKey = clean(body.accountKey, 100);
+  const locationId = clean(body.locationId, 100);
+  const startDate = body.startDate;
+  const endDate = body.endDate;
+  if (!accountKey || !/^locations\/[A-Za-z0-9_-]+$/.test(locationId) || !validDate(startDate) || !validDate(endDate) || startDate > endDate) {
+    return { status: 400, data: { message: "Conta, ficha ou período inválido para palavras-chave." } };
+  }
+  const token = await getGoogleAccessToken(accountKey);
+  const [startYear, startMonth] = startDate.split("-").map(Number);
+  const [endYear, endMonth] = endDate.split("-").map(Number);
+  const url = new URL(PERFORMANCE_API + "/" + locationId + "/searchkeywords/impressions/monthly");
+  url.searchParams.set("monthly_range.start_month.year", String(startYear));
+  url.searchParams.set("monthly_range.start_month.month", String(startMonth));
+  url.searchParams.set("monthly_range.end_month.year", String(endYear));
+  url.searchParams.set("monthly_range.end_month.month", String(endMonth));
+  url.searchParams.set("pageSize", "100");
+  const keywords = [];
+  let pageToken = "";
+  try {
+    do {
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+      const response = await fetch(url, { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error?.message || "Não foi possível consultar palavras-chave (" + response.status + ").");
+      (data.searchKeywordsCounts || []).forEach(item => {
+        const insight = item.insightsValue || {};
+        keywords.push({
+          keyword: item.searchKeyword || "",
+          value: insight.value != null ? Number(insight.value) : null,
+          threshold: insight.threshold != null ? Number(insight.threshold) : null
+        });
+      });
+      pageToken = data.nextPageToken || "";
+    } while (pageToken);
+    keywords.sort((a, b) => (b.value ?? b.threshold ?? 0) - (a.value ?? a.threshold ?? 0));
+    return { status: 200, data: { startMonth: startYear + "-" + String(startMonth).padStart(2, "0"), endMonth: endYear + "-" + String(endMonth).padStart(2, "0"), keywords } };
+  } catch (error) {
+    return { status: 200, data: { keywords: [], error: error.message || "Palavras-chave indisponíveis." } };
+  }
+}
+
 async function categories(body) {
   const accountKey = clean(body.accountKey, 100);
   const query = clean(body.query, 80);
@@ -159,12 +202,16 @@ async function createLocation(body) {
   const phone = clean(body.phone, 40);
   const website = clean(body.website, 300);
   const description = clean(body.description, 750);
+  const businessType = body.businessType === "CUSTOMER_LOCATION_ONLY" ? "CUSTOMER_LOCATION_ONLY" : body.businessType === "CUSTOMER_AND_BUSINESS_LOCATION" ? "CUSTOMER_AND_BUSINESS_LOCATION" : "STORE_FRONT";
+  const serviceAreaPlaceIds = Array.isArray(body.serviceAreaPlaceIds) ? body.serviceAreaPlaceIds.map(value => clean(value, 300)).filter(value => /^[A-Za-z0-9_-]{5,300}$/.test(value)).slice(0, 20) : [];
   const mode = body.mode === "create" ? "create" : "validate";
   const requestId = /^[0-9a-f-]{36}$/i.test(body.requestId || "") ? body.requestId : randomUUID();
 
   if (!accountKey || !/^accounts\/[A-Za-z0-9_-]+$/.test(parent)) return { status: 400, data: { message: "Selecione a conta Google responsável pela nova ficha." } };
-  if (title.length < 2 || !/^categories\/[A-Za-z0-9:_-]+$/.test(categoryName) || !street || !city || !state || !postalCode) {
-    return { status: 400, data: { message: "Preencha nome, categoria oficial do Google e endereço completo." } };
+  const serviceOnly = businessType === "CUSTOMER_LOCATION_ONLY";
+  const hasServiceArea = businessType !== "STORE_FRONT";
+  if (title.length < 2 || !/^categories\/[A-Za-z0-9:_-]+$/.test(categoryName) || (!serviceOnly && (!street || !city || !state || !postalCode)) || (hasServiceArea && !serviceAreaPlaceIds.length)) {
+    return { status: 400, data: { message: serviceOnly ? "Informe nome, categoria oficial e ao menos um Place ID válido da área atendida." : hasServiceArea ? "Preencha o endereço comercial e ao menos um Place ID da área atendida." : "Preencha nome, categoria oficial do Google e endereço completo." } };
   }
   if (phone && phone.length < 8) return { status: 400, data: { message: "Confira o telefone informado." } };
   if (website) {
@@ -193,12 +240,21 @@ async function createLocation(body) {
   const location = {
     languageCode: "pt-BR",
     title,
-    categories: { primaryCategory: { name: categoryName } },
-    storefrontAddress: {
+    categories: { primaryCategory: { name: categoryName } }
+  };
+  if (!serviceOnly) {
+    location.storefrontAddress = {
       regionCode: "BR", languageCode: "pt-BR", addressLines: [street],
       locality: city, administrativeArea: state, postalCode
-    }
-  };
+    };
+  }
+  if (hasServiceArea) {
+    location.serviceArea = {
+      businessType,
+      regionCode: "BR",
+      places: { placeInfos: serviceAreaPlaceIds.map(placeId => ({ placeId })) }
+    };
+  }
   if (phone) location.phoneNumbers = { primaryPhone: phone };
   if (website) location.websiteUri = website;
   if (description) location.profile = { description };
@@ -244,6 +300,9 @@ export default async function handler(req, res) {
         break;
       case "performance":
         result = await performance(body);
+        break;
+      case "search-keywords":
+        result = await searchKeywords(body);
         break;
       case "categories":
         result = await categories(body);

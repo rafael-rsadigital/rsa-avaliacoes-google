@@ -309,7 +309,7 @@
 
     const warning = document.createElement("p");
     warning.className = "create-company-warning";
-    warning.textContent = "A criação não garante publicação imediata. O Google pode exigir uma etapa de verificação para liberar a ficha na Pesquisa e no Maps. Esta versão cadastra empresas com endereço físico.";
+    warning.textContent = "A criação não garante publicação imediata. Empresas que atendem somente no endereço do cliente não exibem endereço público, mas o Google pode solicitar um endereço de verificação no Brasil, onde o responsável possa receber correspondência."
     section.append(warning);
 
     const form = document.createElement("div");
@@ -337,11 +337,51 @@
     accountLabel.textContent = "Conta Google *";
     accountWrap.append(accountLabel, account);
     form.append(accountWrap);
+    const businessTypeWrap = document.createElement("label");
+    businessTypeWrap.className = "create-field create-field-wide";
+    const businessTypeLabel = document.createElement("span");
+    businessTypeLabel.textContent = "Como a empresa atende? *";
+    const businessType = document.createElement("select");
+    businessType.className = "companies-search";
+    businessType.innerHTML = '<option value="STORE_FRONT">Atende clientes no próprio endereço</option><option value="CUSTOMER_AND_BUSINESS_LOCATION">Atende no endereço e também no local do cliente</option><option value="CUSTOMER_LOCATION_ONLY">Atende somente no endereço do cliente (sem receber público)</option>';
+    businessTypeWrap.append(businessTypeLabel, businessType);
+    form.append(businessTypeWrap);
     const name = field("Nome da empresa", "text", "Nome que será exibido no Google", true, 100);
     const street = field("Endereço / rua e número", "text", "Rua, avenida e número", true, 200);
     const city = field("Cidade", "text", "Cidade", true, 100);
     const state = field("Estado (UF)", "text", "Ex.: SP", true, 80);
     const postal = field("CEP", "text", "00000-000", true, 20);
+    const serviceAreaWrap = document.createElement("label");
+    serviceAreaWrap.className = "create-field create-field-wide";
+    serviceAreaWrap.hidden = true;
+    const serviceAreaLabel = document.createElement("span");
+    serviceAreaLabel.textContent = "Place IDs das cidades/regiões atendidas *";
+    const serviceAreaPlaceIds = document.createElement("textarea");
+    serviceAreaPlaceIds.rows = 3;
+    serviceAreaPlaceIds.maxLength = 4000;
+    serviceAreaPlaceIds.placeholder = "Um Place ID por linha (ex.: ChIJ...)";
+    const serviceAreaHelp = document.createElement("small");
+    serviceAreaHelp.textContent = "Use Place IDs de cidades ou regiões do Google Maps, não apenas nomes. Até 20 áreas, uma por linha. ";
+    const placeIdHelp = document.createElement("a");
+    placeIdHelp.href = "https://developers.google.com/maps/documentation/places/web-service/place-id";
+    placeIdHelp.target = "_blank";
+    placeIdHelp.rel = "noopener noreferrer";
+    placeIdHelp.textContent = "Como encontrar um Place ID";
+    serviceAreaHelp.append(placeIdHelp);
+    serviceAreaWrap.append(serviceAreaLabel, serviceAreaPlaceIds, serviceAreaHelp);
+    form.append(serviceAreaWrap);
+    function updateBusinessTypeFields() {
+      const serviceOnly = businessType.value === "CUSTOMER_LOCATION_ONLY";
+      const hasServiceArea = businessType.value !== "STORE_FRONT";
+      [street, city, state, postal].forEach(input => {
+        input.closest("label").hidden = serviceOnly;
+        input.required = !serviceOnly;
+      });
+      serviceAreaWrap.hidden = !hasServiceArea;
+      serviceAreaPlaceIds.required = hasServiceArea;
+    }
+    businessType.addEventListener("change", updateBusinessTypeFields);
+    updateBusinessTypeFields();
     const phone = field("Telefone", "tel", "(00) 00000-0000", false, 40);
     const website = field("Site (HTTPS)", "url", "https://www.empresa.com.br", false, 300);
     const businessDescription = document.createElement("textarea");
@@ -498,15 +538,19 @@
         postalCode: postal.value.trim(),
         phone: phone.value.trim(),
         website: website.value.trim(),
-        description: businessDescription.value.trim()
+        description: businessDescription.value.trim(),
+        businessType: businessType.value,
+        serviceAreaPlaceIds: serviceAreaPlaceIds.value.split(/[\n,;]+/).map(value => value.trim()).filter(Boolean)
       };
     }
 
     validate.addEventListener("click", async () => {
       const payload = collectPayload();
-      if (!payload.accountKey || !payload.title || !payload.categoryName || !payload.street || !payload.city || !payload.state || !payload.postalCode) {
+      const serviceOnly = payload.businessType === "CUSTOMER_LOCATION_ONLY";
+      const hasServiceArea = payload.businessType !== "STORE_FRONT";
+      if (!payload.accountKey || !payload.title || !payload.categoryName || (!serviceOnly && (!payload.street || !payload.city || !payload.state || !payload.postalCode)) || (hasServiceArea && !payload.serviceAreaPlaceIds.length)) {
         status.className = "accounts-message is-error";
-        status.textContent = "Preencha os campos obrigatórios e selecione uma categoria oficial do Google.";
+        status.textContent = serviceOnly ? "Preencha os dados obrigatórios e informe ao menos um Place ID da área atendida." : hasServiceArea ? "Preencha o endereço comercial e informe os Place IDs das áreas atendidas." : "Preencha os campos obrigatórios e selecione uma categoria oficial do Google.";
         return;
       }
       if (busy) return;
@@ -529,7 +573,7 @@
         create.hidden = false;
         const preview = document.createElement("div");
         preview.className = "create-preview";
-        preview.textContent = payload.title + " · " + categorySelect.selectedOptions[0].textContent + " · " + [payload.street, payload.city, payload.state, payload.postalCode].filter(Boolean).join(", ");
+        preview.textContent = payload.title + " · " + categorySelect.selectedOptions[0].textContent + " · " + (serviceOnly ? "Atendimento no local do cliente" : [payload.street, payload.city, payload.state, payload.postalCode].filter(Boolean).join(", ")) + (hasServiceArea ? " · " + payload.serviceAreaPlaceIds.length + " área(s) atendida(s)" : "");
         result.append(preview);
       } catch (error) {
         validatedPayload = null;
@@ -719,7 +763,8 @@
       BUSINESS_IMPRESSIONS_MOBILE_SEARCH: "Visualizações na Pesquisa (celular)",
       WEBSITE_CLICKS: "Cliques no site",
       CALL_CLICKS: "Cliques para ligar",
-      BUSINESS_DIRECTION_REQUESTS: "Solicitações de rota"
+      BUSINESS_DIRECTION_REQUESTS: "Solicitações de rota",
+      MESSAGING_CLICKS: "Cliques em mensagens"
     };
     const total = values => values.reduce((sum, item) => sum + Number(item.value || 0), 0);
     function metricCard(label, value) {
@@ -775,6 +820,7 @@
         const website = total(byName.WEBSITE_CLICKS?.values || []);
         const calls = total(byName.CALL_CLICKS?.values || []);
         const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);
+        const messages = total(byName.MESSAGING_CLICKS?.values || []);
         const cards = document.createElement("div");
         cards.className = "reports-metrics-grid";
         cards.append(
@@ -830,6 +876,54 @@
         });
         detail.append(list);
         results.append(detail);
+
+        const keywordHeading = document.createElement("h3");
+        keywordHeading.className = "reports-chart-title";
+        keywordHeading.textContent = "Termos que encontraram a empresa";
+        results.append(keywordHeading);
+        const keywordNote = document.createElement("p");
+        keywordNote.className = "audit-disclaimer";
+        keywordNote.textContent = "O Google disponibiliza estas buscas agrupadas por mês, não por dia. A consulta considera os meses abrangidos pelo período selecionado.";
+        results.append(keywordNote);
+        const keywordStatus = document.createElement("p");
+        keywordStatus.className = "reports-keyword-status";
+        keywordStatus.textContent = "Consultando palavras-chave…";
+        results.append(keywordStatus);
+        try {
+          const keywordResponse = await fetch("/api/google/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "search-keywords",
+              key: adminAccessKey,
+              accountKey: accountSelect.value,
+              locationId: locationSelect.value,
+              startDate: start.value,
+              endDate: end.value
+            })
+          });
+          const keywordData = await keywordResponse.json().catch(() => ({}));
+          if (!keywordResponse.ok) throw new Error(keywordData.message || "Falha ao consultar palavras-chave.");
+          keywordStatus.textContent = keywordData.error || (keywordData.keywords?.length ? keywordData.keywords.length + " termos encontrados." : "O Google não retornou termos para os meses selecionados.");
+          if (keywordData.keywords?.length) {
+            const keywordList = document.createElement("div");
+            keywordList.className = "reports-keyword-list";
+            keywordData.keywords.forEach(item => {
+              const row = document.createElement("div");
+              row.className = "reports-keyword-row";
+              const term = document.createElement("span");
+              term.textContent = item.keyword;
+              const count = document.createElement("strong");
+              count.textContent = item.value != null ? item.value.toLocaleString("pt-BR") : item.threshold != null ? "Menos de " + item.threshold.toLocaleString("pt-BR") : "—";
+              row.append(term, count);
+              keywordList.append(row);
+            });
+            results.append(keywordList);
+          }
+        } catch (keywordError) {
+          keywordStatus.textContent = "Palavras-chave indisponíveis: " + keywordError.message;
+        }
+
         status.className = failed.length ? "accounts-message" : "accounts-message is-success";
         status.textContent = failed.length
           ? "Relatório parcial: " + available.length + " de " + metrics.length + " métricas disponíveis. Métricas indisponíveis podem exigir habilitação ou cota da API."
