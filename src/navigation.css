@@ -1,0 +1,70 @@
+/* Navegação da Central RSA Digital — camada visual isolada */
+.wrap{
+  width:min(100% - 48px, 1540px);
+  max-width:none;
+  margin:0 auto;
+  padding:28px 0 48px;
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:30px;
+  align-items:start;
+}
+.app-sidebar{
+  position:sticky;top:24px;min-height:calc(100vh - 48px);
+  padding:20px 14px;border:1px solid var(--line);border-radius:18px;
+  background:rgba(15,27,43,.94);box-shadow:0 18px 50px #0002;
+  display:flex;flex-direction:column;gap:24px;
+}
+.app-sidebar-brand{display:flex;align-items:center;gap:11px;padding:2px 6px 16px;border-bottom:1px solid var(--line)}
+.app-sidebar-mark{width:39px;height:39px;border:1px solid #9d854d;border-radius:11px;display:grid;place-items:center;color:var(--gold);font:800 15px Manrope}
+.app-sidebar-title{font:800 13px Manrope;letter-spacing:.08em}
+.app-sidebar-subtitle{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.app-nav{display:flex;flex-direction:column;gap:5px}
+.app-nav-label{padding:0 10px 7px;color:#71849b;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.app-nav-link{
+  width:100%;display:flex;align-items:center;gap:11px;padding:11px 10px;
+  border:1px solid transparent;border-radius:10px;background:transparent;
+  color:#b8c5d4;text-align:left;font:600 13px "DM Sans",sans-serif;cursor:pointer;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.app-nav-link:hover{background:#17283d;color:#fff}
+.app-nav-link.active{background:#263a52;border-color:#405873;color:#fff}
+.app-nav-icon{width:20px;text-align:center;color:var(--gold);font-size:15px}
+.app-nav-meta{margin-left:auto;color:#8294a9;font-size:10px;font-weight:600}
+.app-sidebar-foot{margin-top:auto;padding:13px 10px 2px;border-top:1px solid var(--line);font-size:11px;color:#7f91a6;line-height:1.5}
+.app-content{min-width:0;width:100%;max-width:1160px;margin:0 auto}
+.app-content>.top{margin-bottom:32px}
+.app-content main{min-width:0}
+.app-content main>h1{font-size:clamp(26px,3vw,35px)}
+.app-content .nav-tabs{display:none!important}
+.nav-dashboard,.nav-placeholder{margin:0 0 18px}
+.nav-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.nav-dashboard-card,.nav-placeholder-card{
+  background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));
+  border:1px solid var(--line);border-radius:15px;padding:18px;
+}
+.nav-dashboard-card h3,.nav-placeholder-card h2{font:700 16px Manrope;margin:0 0 8px}
+.nav-dashboard-card p,.nav-placeholder-card p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}
+.nav-dashboard-card button{margin-top:14px}
+.nav-placeholder-card{padding:24px}
+.nav-placeholder-kicker{color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px}
+.nav-placeholder-card h2{font-size:22px;margin-bottom:10px}
+.nav-placeholder-list{margin:16px 0 0;padding-left:19px;color:#c7d2df;font-size:13px;line-height:1.9}
+.nav-section-hidden{display:none!important}
+.app-content .panel{min-width:0}
+@media(max-width:900px){
+  .wrap{width:min(100% - 32px,760px);display:block;padding:16px 0 36px}
+  .app-sidebar{position:relative;top:auto;min-height:0;padding:13px;margin-bottom:22px;gap:12px}
+  .app-sidebar-brand{padding-bottom:11px}
+  .app-nav{display:flex;flex-direction:row;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}
+  .app-nav-label,.app-sidebar-foot{display:none}
+  .app-nav-link{width:auto;min-width:max-content;padding:10px 12px}
+  .app-nav-meta{display:none}
+  .app-content>.top{margin-bottom:25px}
+}
+@media(max-width:600px){
+  .wrap{width:calc(100% - 24px);padding-top:12px}
+  .nav-dashboard-grid{grid-template-columns:1fr}
+  .app-content .panel{padding:15px}
+  .app-content>.top{align-items:flex-start}
+}
