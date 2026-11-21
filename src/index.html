@@ -26,12 +26,12 @@
 <div class="login" id="loginBox"><div><strong>Conecte sua conta Google</strong><p>Use a conta que tem acesso de gerente às fichas dos clientes.</p></div><button class="btn primary" id="connectBtn" disabled>Conectar Google</button></div>
 <div id="appBox" class="hidden">
 <div class="toolbar"><select class="select" id="locationSelect"><option value="">Selecione uma empresa</option></select><button class="btn secondary" id="refreshBtn">Atualizar avaliações</button><button class="btn danger" id="disconnectBtn">Sair</button></div>
+<div id="notice" class="notice"></div>
 <div class="nav-tabs" role="tablist" aria-label="Seções da central">
 <button class="tab active" id="reviewsTab" type="button">Avaliações</button>
 <button class="tab" id="publicationsTab" type="button">Publicações Google</button>
 </div>
 <div id="reviewsSection">
-<div id="notice" class="notice"></div>
 <div class="stats"><div class="stat"><strong id="totalCount">—</strong><span>Avaliações carregadas</span></div><div class="stat"><strong id="pendingCount">—</strong><span>Sem resposta</span></div><div class="stat"><strong id="ratingValue">—</strong><span>Nota média</span></div></div>
 <div class="filters"><strong id="listTitle">Avaliações</strong><div class="toggle"><button class="active" data-filter="pending">Sem resposta</button><button data-filter="all">Todas</button></div></div>
 <div id="reviewsList"></div>
@@ -100,7 +100,6 @@ $("publishMediaBtn").onclick=async()=>{
   if(isPost&&!summary){notice("Escreva o texto da atualização antes de continuar.","error");$("pubSummary").focus();return}
   if(isPost&&summary.length>1500){notice("O texto ultrapassa o limite de 1.500 caracteres.","error");return}
   if(isPost&&actionType&&actionType!=="CALL"){let parsed;try{parsed=new URL(actionUrl)}catch{}if(!parsed||parsed.protocol!=="https:"){notice("Informe um link HTTPS válido para o botão.","error");$("pubCtaUrl").focus();return}}
-  const destination=isPost?"uma atualização no Google":"a galeria de fotos do Google";
   const ctaLabel=actionType?$("pubCta").selectedOptions[0].textContent:"sem botão";
   const confirmation="Confirma a publicação de "+(isPost?"uma atualização":"uma foto na galeria")+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\n\nTexto: "+summary+"\nBotão: "+ctaLabel:"\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+"\n\nEsta ação publicará o conteúdo no Perfil da Empresa Google.";
   if(!confirm(confirmation))return;
