@@ -301,9 +301,9 @@
     kicker.textContent = "Novo Perfil da Empresa";
     const title = document.createElement("h2");
     title.textContent = "Criar empresa no Google";
-    const description = document.createElement("p");
-    description.textContent = "Preencha os dados, escolha uma categoria oficial e valide as informações antes de enviar a criação ao Google.";
-    copy.append(kicker, title, description);
+    const introDescription = document.createElement("p");
+    introDescription.textContent = "Preencha os dados, escolha uma categoria oficial e valide as informações antes de enviar a criação ao Google.";
+    copy.append(kicker, title, introDescription);
     heading.append(copy);
     section.append(heading);
 
@@ -344,14 +344,14 @@
     const postal = field("CEP", "text", "00000-000", true, 20);
     const phone = field("Telefone", "tel", "(00) 00000-0000", false, 40);
     const website = field("Site (HTTPS)", "url", "https://www.empresa.com.br", false, 300);
-    const description = document.createElement("textarea");
-    description.maxLength = 750;
-    description.placeholder = "Descrição objetiva da empresa (até 750 caracteres)";
+    const businessDescription = document.createElement("textarea");
+    businessDescription.maxLength = 750;
+    businessDescription.placeholder = "Descrição objetiva da empresa (até 750 caracteres)";
     const descriptionWrap = document.createElement("label");
     descriptionWrap.className = "create-field create-field-wide";
     const descriptionLabel = document.createElement("span");
     descriptionLabel.textContent = "Descrição da empresa";
-    descriptionWrap.append(descriptionLabel, description);
+    descriptionWrap.append(descriptionLabel, businessDescription);
     form.append(descriptionWrap);
 
     const categoryRow = document.createElement("div");
@@ -498,7 +498,7 @@
         postalCode: postal.value.trim(),
         phone: phone.value.trim(),
         website: website.value.trim(),
-        description: description.value.trim()
+        description: businessDescription.value.trim()
       };
     }
 
