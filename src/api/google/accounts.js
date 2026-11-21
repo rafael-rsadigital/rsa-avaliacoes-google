@@ -25,6 +25,8 @@ export default async function handler(req, res) {
           locationCount: locations.length,
           locations: locations.map((location) => ({
             name: location.name,
+            locationId: location.locationId,
+            accountName: location.accountName,
             title: location.title,
             address: location.address,
             websiteUri: location.websiteUri
