@@ -1120,6 +1120,14 @@
         adminAccessKey = secret;
         window.rsaAdminAccessKey = secret;
         const accounts = data.accounts || [];
+        const allLocations = accounts.filter(item => item.status === "connected").flatMap(account =>
+          (account.locations || []).map(location => ({
+            ...location,
+            accountKey: account.id,
+            accountLabel: account.label || "Conta Google"
+          }))
+        );
+        window.dispatchEvent(new CustomEvent("rsa:all-locations-loaded", { detail: { locations: allLocations } }));
         message.className = "accounts-message is-success";
         message.textContent = accounts.length
           ? accounts.length + (accounts.length === 1 ? " conta autorizada encontrada." : " contas autorizadas encontradas.")
