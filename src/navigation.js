@@ -260,10 +260,10 @@
     (async () => {
       try {
         message.textContent = "Consultando as fichas de todas as contas…";
-        const response = await fetch("/api/google/accounts", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey })
+          body: JSON.stringify({ action: "accounts", key: adminAccessKey })
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.message || "Não foi possível carregar as empresas.");
@@ -417,10 +417,10 @@
     async function loadAccounts() {
       status.textContent = "Carregando contas comerciais disponíveis…";
       try {
-        const response = await fetch("/api/google/accounts", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey })
+          body: JSON.stringify({ action: "accounts", key: adminAccessKey })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
@@ -456,10 +456,10 @@
       searchCategory.disabled = true;
       searchCategory.textContent = "Buscando…";
       try {
-        const response = await fetch("/api/google/categories", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey, accountKey: selected.accountKey, query })
+          body: JSON.stringify({ action: "categories", key: adminAccessKey, accountKey: selected.accountKey, query })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível buscar categorias.");
@@ -516,10 +516,10 @@
       create.hidden = true;
       result.innerHTML = "";
       try {
-        const response = await fetch("/api/google/create-location", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, mode: "validate" })
+          body: JSON.stringify({ ...payload, action: "create-location", mode: "validate" })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "O Google não aceitou a validação.");
@@ -549,10 +549,10 @@
       create.disabled = true;
       create.textContent = "Enviando…";
       try {
-        const response = await fetch("/api/google/create-location", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...validatedPayload, mode: "create" })
+          body: JSON.stringify({ ...validatedPayload, action: "create-location", mode: "create" })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível criar a ficha.");
@@ -690,10 +690,10 @@
     async function loadAccounts() {
       status.textContent = "Carregando contas e fichas…";
       try {
-        const response = await fetch("/api/google/accounts", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey })
+          body: JSON.stringify({ action: "accounts", key: adminAccessKey })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
@@ -746,10 +746,11 @@
       status.textContent = "Buscando métricas oficiais no Google…";
       results.innerHTML = "";
       try {
-        const response = await fetch("/api/google/performance", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            action: "performance",
             key: adminAccessKey,
             accountKey: accountSelect.value,
             locationId: locationSelect.value,
@@ -986,10 +987,10 @@
     async function loadAccounts() {
       status.textContent = "Carregando contas e fichas…";
       try {
-        const response = await fetch("/api/google/accounts", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey })
+          body: JSON.stringify({ action: "accounts", key: adminAccessKey })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
@@ -1016,10 +1017,10 @@
       status.textContent = "Consultando os campos da ficha no Google…";
       result.innerHTML = "";
       try {
-        const response = await fetch("/api/google/audit", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: adminAccessKey, accountKey: accountSelect.value, locationId: locationSelect.value })
+          body: JSON.stringify({ action: "audit", key: adminAccessKey, accountKey: accountSelect.value, locationId: locationSelect.value })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível analisar a ficha.");
@@ -1109,7 +1110,7 @@
       message.textContent = "Consultando as autorizações e fichas no Google…";
       list.innerHTML = "";
       try {
-        const response = await fetch("/api/google/accounts", {
+        const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: secret })
