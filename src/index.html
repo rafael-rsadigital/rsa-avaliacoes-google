@@ -85,7 +85,7 @@ function showMainSection(section){const isReviews=section==="reviews";$("reviews
 $("reviewsTab").onclick=()=>showMainSection("reviews");
 $("publicationsTab").onclick=()=>showMainSection("publications");
 $("pubDestination").onchange=()=>{const post=$("pubDestination").value==="post";$("galleryFields").classList.toggle("hidden",post);$("postFields").classList.toggle("hidden",!post);$("pubResult").classList.add("hidden")};
-$("pubImageUrl").oninput=()=>{const value=$("pubImageUrl").value.trim();const img=$("pubImagePreview");if(/^https:\\/\\//i.test(value)){img.src=value;$("pubImageHint").textContent=value}else{img.removeAttribute("src");$("pubImageHint").textContent="A prévia da imagem aparecerá aqui quando você inserir um link."}};
+$("pubImageUrl").oninput=()=>{const value=$("pubImageUrl").value.trim();const img=$("pubImagePreview");if(/^https:\/\//i.test(value)){img.src=value;$("pubImageHint").textContent=value}else{img.removeAttribute("src");$("pubImageHint").textContent="A prévia da imagem aparecerá aqui quando você inserir um link."}};
 $("pubSummary").oninput=()=>$("pubCharCount").textContent=String($("pubSummary").value.length);
 $("pubCta").onchange=()=>{const needsUrl=$("pubCta").value!==""&&$("pubCta").value!=="CALL";$("pubCtaUrlField").classList.toggle("hidden",!needsUrl)};
 $("publishMediaBtn").onclick=async()=>{
@@ -102,7 +102,7 @@ $("publishMediaBtn").onclick=async()=>{
   if(isPost&&actionType&&actionType!=="CALL"){let parsed;try{parsed=new URL(actionUrl)}catch{}if(!parsed||parsed.protocol!=="https:"){notice("Informe um link HTTPS válido para o botão.","error");$("pubCtaUrl").focus();return}}
   const destination=isPost?"uma atualização no Google":"a galeria de fotos do Google";
   const ctaLabel=actionType?$("pubCta").selectedOptions[0].textContent:"sem botão";
-  const confirmation="Confirma a publicação de "+(isPost?"uma atualização":"uma foto na galeria")+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\\n\\nTexto: "+summary+"\\nBotão: "+ctaLabel:"\\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+"\\n\\nEsta ação publicará o conteúdo no Perfil da Empresa Google.";
+  const confirmation="Confirma a publicação de "+(isPost?"uma atualização":"uma foto na galeria")+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\n\nTexto: "+summary+"\nBotão: "+ctaLabel:"\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+"\n\nEsta ação publicará o conteúdo no Perfil da Empresa Google.";
   if(!confirm(confirmation))return;
   const button=$("publishMediaBtn");button.disabled=true;button.textContent="Publicando…";$("pubResult").classList.add("hidden");clearNotice();
   try{
@@ -111,7 +111,7 @@ $("publishMediaBtn").onclick=async()=>{
       :await api("/api/media",{locationName:selectedLocation.name,sourceUrl,category:$("pubCategory").value});
     const item=isPost?result.post:result.media;
     const link=item?.searchUrl||item?.googleUrl||"";
-    $("pubResult").textContent=(result.message||"Publicação concluída.")+(item?.name?"\\nIdentificador Google: "+item.name:"")+(link?"\\nLink: "+link:"");
+    $("pubResult").textContent=(result.message||"Publicação concluída.")+(item?.name?"\nIdentificador Google: "+item.name:"")+(link?"\nLink: "+link:"");
     $("pubResult").classList.remove("hidden");notice(result.message||"Publicação concluída no Google.","ok");
   }catch(error){notice(error.message||"Não foi possível publicar no Google.","error")}
   finally{button.disabled=false;button.textContent="Revisar e publicar"}
