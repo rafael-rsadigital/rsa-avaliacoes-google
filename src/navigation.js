@@ -1113,7 +1113,7 @@
         const response = await fetch("/api/google/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: secret })
+          body: JSON.stringify({ key: secret, action: "accounts" })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível consultar as contas.");
