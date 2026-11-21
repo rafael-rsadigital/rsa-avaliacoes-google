@@ -1036,45 +1036,111 @@
       const categories = location.categories || {};
       const primaryCategory = categories.primaryCategory?.displayName || categories.primaryCategory?.name || "";
       const additionalCategories = categories.additionalCategories || [];
-      const profileDescription = location.profile?.description || "";
+      const profileDescription = (location.profile?.description || "").trim();
       const phone = location.phoneNumbers?.primaryPhone || "";
+      const website = location.websiteUri || "";
       const address = location.storefrontAddress;
-      const hasAddress = Boolean(address?.addressLines?.length || address?.locality);
-      const hasServiceArea = Boolean(location.serviceArea);
+      const hasAddress = Boolean(address?.addressLines?.some(Boolean) || address?.locality);
+      const serviceArea = location.serviceArea || {};
+      const hasServiceArea = Boolean(serviceArea.businessType || serviceArea.places?.placeInfos?.length);
       const hasHours = Boolean(location.regularHours?.periods?.length);
       const serviceItems = location.serviceItems || [];
+      const hasOpenInfo = Boolean(location.openInfo?.status);
+      const descriptionLength = profileDescription.length;
+      const addressComplete = Boolean(address?.locality && address?.regionCode && address?.addressLines?.some(Boolean));
+      const serviceAreaCount = serviceArea.places?.placeInfos?.length || 0;
       const checks = [
-        ["Categoria principal", Boolean(primaryCategory), primaryCategory || "Cadastre uma categoria principal adequada à atividade."],
-        ["Descrição da empresa", Boolean(profileDescription.trim()), profileDescription.trim() || "Inclua uma descrição objetiva dos serviços, diferenciais e área atendida."],
-        ["Telefone", Boolean(phone), phone || "Adicione um telefone direto para contato."],
-        ["Site", Boolean(location.websiteUri), location.websiteUri || "Informe o site oficial, se a empresa possuir."],
-        ["Localização ou área atendida", hasAddress || hasServiceArea, hasAddress ? formatAddress(address) : hasServiceArea ? "Área de atendimento cadastrada." : "Informe o endereço da loja ou a área de atendimento, conforme o modelo de negócio."],
-        ["Horários", hasHours, hasHours ? location.regularHours.periods.length + " período(s) de funcionamento cadastrado(s)." : "Cadastre os horários de funcionamento ou atendimento."],
-        ["Serviços", serviceItems.length > 0, serviceItems.length ? serviceItems.length + " serviço(s) cadastrado(s)." : "Se a empresa presta serviços, cadastre os principais serviços oferecidos."]
+        { group: "Informações essenciais", label: "Categoria principal", ok: Boolean(primaryCategory), priority: "alta", detail: primaryCategory || "Não há categoria principal retornada.", action: "Escolha a categoria mais específica que represente a atividade principal. Evite categorias que não correspondam aos serviços reais." },
+        { group: "Informações essenciais", label: "Telefone de contato", ok: Boolean(phone), priority: "alta", detail: phone || "Telefone principal não cadastrado.", action: "Adicione um número atualizado que seja atendido pela empresa." },
+        { group: "Informações essenciais", label: "Site oficial", ok: Boolean(website), priority: "média", detail: website || "Site não informado.", action: "Inclua o site oficial, se existir. Confira se abre corretamente e leva o visitante à página da empresa." },
+        { group: "Informações essenciais", label: "Endereço ou área de atendimento", ok: hasAddress || hasServiceArea, priority: "alta", detail: hasAddress ? formatAddress(address) : hasServiceArea ? (serviceArea.businessType === "CUSTOMER_LOCATION_ONLY" ? "Atendimento no local do cliente." : "Área de atendimento cadastrada.") : "Endereço e área de atendimento não identificados.", action: "Cadastre o endereço quando a empresa recebe clientes ou configure a área de atendimento quando presta serviços no local do cliente." },
+        { group: "Informações essenciais", label: "Horários de funcionamento", ok: hasHours, priority: "alta", detail: hasHours ? location.regularHours.periods.length + " período(s) cadastrados." : "Horários regulares não encontrados.", action: "Cadastre os dias e horários reais de atendimento e mantenha feriados e exceções atualizados." },
+        { group: "Relevância local", label: "Descrição da empresa", ok: descriptionLength >= 100, priority: "média", detail: descriptionLength ? descriptionLength + " de até 750 caracteres." : "Descrição não cadastrada.", action: "Escreva uma descrição clara, natural e específica: atividade, serviços principais, público atendido e cidades/regiões. Evite repetição artificial de palavras-chave." },
+        { group: "Relevância local", label: "Serviços cadastrados", ok: serviceItems.length > 0, priority: "média", detail: serviceItems.length ? serviceItems.length + " serviço(s) cadastrados." : "Nenhum serviço retornado.", action: "Cadastre os serviços efetivamente oferecidos, com nomes objetivos e descrições úteis quando disponíveis." },
+        { group: "Qualidade do perfil", label: "Categorias adicionais", ok: additionalCategories.length > 0, priority: "baixa", detail: additionalCategories.length ? additionalCategories.length + " categoria(s) adicional(is)." : "Nenhuma categoria adicional cadastrada.", action: "Adicione categorias secundárias somente quando representarem outras atividades reais da empresa." },
+        { group: "Qualidade do perfil", label: "Situação da ficha", ok: hasOpenInfo, priority: "média", detail: hasOpenInfo ? "Status: " + location.openInfo.status + "." : "Status da ficha não retornado nesta consulta.", action: "Confira se a ficha está aberta e se os dados de funcionamento correspondem à operação atual." }
       ];
-      const score = checks.filter(item => item[1]).length;
+      const completed = checks.filter(item => item.ok).length;
       const summary = document.createElement("div");
       summary.className = "audit-score";
       const scoreValue = document.createElement("strong");
-      scoreValue.textContent = score + "/" + checks.length;
+      scoreValue.textContent = completed + "/" + checks.length;
       const scoreLabel = document.createElement("span");
-      scoreLabel.textContent = "itens verificados preenchidos";
+      scoreLabel.textContent = "verificações com dados identificados";
       summary.append(scoreValue, scoreLabel);
       const company = document.createElement("h3");
       company.className = "audit-company-title";
       company.textContent = location.title || "Ficha selecionada";
       const categoryMeta = document.createElement("p");
       categoryMeta.className = "audit-meta";
-      categoryMeta.textContent = "Categoria: " + (primaryCategory || "Não informada") +
-        (additionalCategories.length ? " · " + additionalCategories.length + " categoria(s) adicional(is)" : "");
+      categoryMeta.textContent = "Categoria principal: " + (primaryCategory || "Não informada") +
+        (additionalCategories.length ? " · " + additionalCategories.length + " secundária(s)" : "");
       result.append(summary, company, categoryMeta);
-      const list = document.createElement("div");
-      list.className = "audit-checks";
-      checks.forEach(item => addCheck(list, item[0], item[1], item[2]));
-      result.append(list);
+
+      const overview = document.createElement("div");
+      overview.className = "audit-overview";
+      [
+        ["Telefone", phone || "Não informado"],
+        ["Site", website || "Não informado"],
+        ["Descrição", descriptionLength + "/750 caracteres"],
+        ["Serviços", String(serviceItems.length)],
+        ["Área atendida", serviceAreaCount ? serviceAreaCount + " região(ões)" : hasServiceArea ? "Configurada" : "Não identificada"]
+      ].forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "audit-overview-card";
+        const name = document.createElement("span");
+        name.textContent = label;
+        const content = document.createElement("strong");
+        content.textContent = value;
+        card.append(name, content);
+        overview.append(card);
+      });
+      result.append(overview);
+
+      ["Informações essenciais", "Relevância local", "Qualidade do perfil"].forEach(groupName => {
+        const groupChecks = checks.filter(item => item.group === groupName);
+        const heading = document.createElement("h4");
+        heading.className = "audit-group-title";
+        heading.textContent = groupName;
+        result.append(heading);
+        const list = document.createElement("div");
+        list.className = "audit-checks";
+        groupChecks.forEach(item => addCheck(list, item.label, item.ok, item.detail));
+        result.append(list);
+      });
+
+      const priorities = checks.filter(item => !item.ok).sort((a, b) => ({ alta: 0, média: 1, baixa: 2 }[a.priority] - ({ alta: 0, média: 1, baixa: 2 }[b.priority])));
+      const recommendationsTitle = document.createElement("h4");
+      recommendationsTitle.className = "audit-group-title";
+      recommendationsTitle.textContent = "Plano de ação recomendado";
+      result.append(recommendationsTitle);
+      if (priorities.length) {
+        const actions = document.createElement("div");
+        actions.className = "audit-recommendations";
+        priorities.forEach((item, index) => {
+          const card = document.createElement("article");
+          card.className = "audit-recommendation";
+          const heading = document.createElement("strong");
+          heading.textContent = (index + 1) + ". " + item.label;
+          const priority = document.createElement("span");
+          priority.className = "audit-priority audit-priority-" + (item.priority === "alta" ? "high" : item.priority === "média" ? "medium" : "low");
+          priority.textContent = "Prioridade " + item.priority;
+          const detail = document.createElement("p");
+          detail.textContent = item.action;
+          card.append(heading, priority, detail);
+          actions.append(card);
+        });
+        result.append(actions);
+      } else {
+        const complete = document.createElement("p");
+        complete.className = "audit-disclaimer";
+        complete.textContent = "Todos os itens desta lista foram identificados. Ainda vale revisar a precisão das informações e a qualidade do conteúdo.";
+        result.append(complete);
+      }
+
       const foot = document.createElement("p");
       foot.className = "audit-disclaimer";
-      foot.textContent = "Este indicador mede apenas a presença dos campos consultados. Não representa uma nota do Google nem garante posicionamento nos resultados de busca.";
+      foot.textContent = "O diagnóstico verifica somente os dados disponibilizados pela API do Google. A contagem não é uma nota oficial, não mede reputação, concorrência ou relevância real e não garante posições no Google. Dados ausentes na resposta podem depender das permissões ou dos campos disponibilizados pela API.";
       result.append(foot);
     }
 
