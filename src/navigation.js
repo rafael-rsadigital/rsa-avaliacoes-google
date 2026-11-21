@@ -813,7 +813,8 @@
         const impressions = impressionsNames.reduce((sum, name) => sum + total(byName[name]?.values || []), 0);
         const website = total(byName.WEBSITE_CLICKS?.values || []);
         const calls = total(byName.CALL_CLICKS?.values || []);
-        const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);\n        const messages = total(byName.MESSAGING_CLICKS?.values || []);
+        const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);
+        const messages = total(byName.MESSAGING_CLICKS?.values || []);
         const cards = document.createElement("div");
         cards.className = "reports-metrics-grid";
         cards.append(
