@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     response_type: "code",
     scope: "https://www.googleapis.com/auth/business.manage",
     access_type: "offline",
-    prompt: "consent",
+    prompt: "select_account consent",
     include_granted_scopes: "true",
     state
   }).toString();
