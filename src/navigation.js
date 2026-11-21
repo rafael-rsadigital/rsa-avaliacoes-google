@@ -254,6 +254,199 @@
     placeholder.append(section);
   }
 
+  function renderAudit() {
+    placeholder.innerHTML = "";
+    const section = document.createElement("div");
+    section.className = "audit-panel";
+    const heading = document.createElement("div");
+    heading.className = "companies-heading";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "nav-placeholder-kicker";
+    kicker.textContent = "Diagnóstico da ficha";
+    const title = document.createElement("h2");
+    title.textContent = "Auditoria e SEO local";
+    const description = document.createElement("p");
+    description.textContent = "Analise informações cadastradas diretamente no Perfil da Empresa Google. O diagnóstico é consultivo e não altera os dados da ficha.";
+    copy.append(kicker, title, description);
+    heading.append(copy);
+    section.append(heading);
+
+    const form = document.createElement("div");
+    form.className = "audit-controls";
+    const accountSelect = document.createElement("select");
+    accountSelect.className = "companies-search";
+    accountSelect.setAttribute("aria-label", "Conta Google");
+    accountSelect.innerHTML = '<option value="">Selecione uma conta Google</option>';
+    const locationSelect = document.createElement("select");
+    locationSelect.className = "companies-search";
+    locationSelect.disabled = true;
+    locationSelect.setAttribute("aria-label", "Empresa para auditoria");
+    locationSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+    const run = document.createElement("button");
+    run.type = "button";
+    run.className = "btn primary";
+    run.textContent = "Analisar ficha";
+    run.disabled = true;
+    form.append(accountSelect, locationSelect, run);
+    section.append(form);
+
+    const status = document.createElement("div");
+    status.className = "accounts-message";
+    status.setAttribute("aria-live", "polite");
+    section.append(status);
+    const result = document.createElement("div");
+    result.className = "audit-results";
+    section.append(result);
+
+    if (!adminAccessKey) {
+      status.className = "accounts-message is-error";
+      status.textContent = "Para usar a auditoria, primeiro abra Contas Google e consulte as contas com a chave de configuração. A autorização ficará disponível apenas durante esta sessão.";
+      const goAccounts = document.createElement("button");
+      goAccounts.type = "button";
+      goAccounts.className = "btn secondary";
+      goAccounts.textContent = "Abrir Contas Google";
+      goAccounts.addEventListener("click", () => sidebar.querySelector('[data-view="accounts"]')?.click());
+      section.append(goAccounts);
+      placeholder.append(section);
+      return;
+    }
+
+    let accounts = [];
+    function populateLocations() {
+      const account = accounts.find(item => item.id === accountSelect.value);
+      locationSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+      (account?.locations || []).forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.locationId || "";
+        option.textContent = location.title || location.name;
+        locationSelect.append(option);
+      });
+      locationSelect.disabled = !account?.locations?.length;
+      run.disabled = !locationSelect.value;
+    }
+    accountSelect.addEventListener("change", populateLocations);
+    locationSelect.addEventListener("change", () => { run.disabled = !locationSelect.value; });
+
+    function addCheck(container, label, value, detail) {
+      const row = document.createElement("div");
+      row.className = "audit-check " + (value ? "is-ok" : "is-missing");
+      const mark = document.createElement("span");
+      mark.className = "audit-check-mark";
+      mark.textContent = value ? "✓" : "!";
+      const body = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = label;
+      const note = document.createElement("p");
+      note.textContent = detail;
+      body.append(name, note);
+      row.append(mark, body);
+      container.append(row);
+      return Boolean(value);
+    }
+
+    function renderResult(location) {
+      result.innerHTML = "";
+      const categories = location.categories || {};
+      const primaryCategory = categories.primaryCategory?.displayName || categories.primaryCategory?.name || "";
+      const additionalCategories = categories.additionalCategories || [];
+      const profileDescription = location.profile?.description || "";
+      const phone = location.phoneNumbers?.primaryPhone || "";
+      const address = location.storefrontAddress;
+      const hasAddress = Boolean(address?.addressLines?.length || address?.locality);
+      const hasServiceArea = Boolean(location.serviceArea);
+      const hasHours = Boolean(location.regularHours?.periods?.length);
+      const serviceItems = location.serviceItems || [];
+      const checks = [
+        ["Categoria principal", Boolean(primaryCategory), primaryCategory || "Cadastre uma categoria principal adequada à atividade."],
+        ["Descrição da empresa", Boolean(profileDescription.trim()), profileDescription.trim() || "Inclua uma descrição objetiva dos serviços, diferenciais e área atendida."],
+        ["Telefone", Boolean(phone), phone || "Adicione um telefone direto para contato."],
+        ["Site", Boolean(location.websiteUri), location.websiteUri || "Informe o site oficial, se a empresa possuir."],
+        ["Localização ou área atendida", hasAddress || hasServiceArea, hasAddress ? formatAddress(address) : hasServiceArea ? "Área de atendimento cadastrada." : "Informe o endereço da loja ou a área de atendimento, conforme o modelo de negócio."],
+        ["Horários", hasHours, hasHours ? location.regularHours.periods.length + " período(s) de funcionamento cadastrado(s)." : "Cadastre os horários de funcionamento ou atendimento."],
+        ["Serviços", serviceItems.length > 0, serviceItems.length ? serviceItems.length + " serviço(s) cadastrado(s)." : "Se a empresa presta serviços, cadastre os principais serviços oferecidos."]
+      ];
+      const score = checks.filter(item => item[1]).length;
+      const summary = document.createElement("div");
+      summary.className = "audit-score";
+      const scoreValue = document.createElement("strong");
+      scoreValue.textContent = score + "/" + checks.length;
+      const scoreLabel = document.createElement("span");
+      scoreLabel.textContent = "itens verificados preenchidos";
+      summary.append(scoreValue, scoreLabel);
+      const company = document.createElement("h3");
+      company.className = "audit-company-title";
+      company.textContent = location.title || "Ficha selecionada";
+      const categoryMeta = document.createElement("p");
+      categoryMeta.className = "audit-meta";
+      categoryMeta.textContent = "Categoria: " + (primaryCategory || "Não informada") +
+        (additionalCategories.length ? " · " + additionalCategories.length + " categoria(s) adicional(is)" : "");
+      result.append(summary, company, categoryMeta);
+      const list = document.createElement("div");
+      list.className = "audit-checks";
+      checks.forEach(item => addCheck(list, item[0], item[1], item[2]));
+      result.append(list);
+      const foot = document.createElement("p");
+      foot.className = "audit-disclaimer";
+      foot.textContent = "Este indicador mede apenas a presença dos campos consultados. Não representa uma nota do Google nem garante posicionamento nos resultados de busca.";
+      result.append(foot);
+    }
+
+    async function loadAccounts() {
+      status.textContent = "Carregando contas e fichas…";
+      try {
+        const response = await fetch("/api/google/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
+        accounts = data.accounts || [];
+        accounts.filter(item => item.status === "connected").forEach(account => {
+          const option = document.createElement("option");
+          option.value = account.id;
+          option.textContent = account.label + " (" + account.locationCount + " fichas)";
+          accountSelect.append(option);
+        });
+        status.className = "accounts-message is-success";
+        status.textContent = accounts.length ? "Escolha a conta e a ficha que deseja analisar." : "Nenhuma conta Google conectada.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      }
+    }
+
+    run.addEventListener("click", async () => {
+      if (!accountSelect.value || !locationSelect.value) return;
+      run.disabled = true;
+      run.textContent = "Analisando…";
+      status.className = "accounts-message";
+      status.textContent = "Consultando os campos da ficha no Google…";
+      result.innerHTML = "";
+      try {
+        const response = await fetch("/api/google/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey, accountKey: accountSelect.value, locationId: locationSelect.value })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível analisar a ficha.");
+        renderResult(data.location || {});
+        status.className = "accounts-message is-success";
+        status.textContent = "Auditoria concluída com os dados retornados pelo Google.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      } finally {
+        run.disabled = !locationSelect.value;
+        run.textContent = "Analisar ficha";
+      }
+    });
+    placeholder.append(section);
+    loadAccounts();
+  }
+
   function renderAccounts() {
     placeholder.innerHTML = "";
     const section = document.createElement("div");
@@ -412,6 +605,7 @@
     }
     if (view === "companies") renderCompanies();
     if (view === "accounts") renderAccounts();
+    if (view === "audit") renderAudit();
     if (view === "reviews" || view === "publications") {
       if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
       if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
