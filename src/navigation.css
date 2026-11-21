@@ -54,14 +54,29 @@
 .app-content .panel{min-width:0}
 @media(max-width:900px){
   .wrap{width:min(100% - 32px,760px);display:block;padding:16px 0 36px}
-  .app-sidebar{position:relative;top:auto;min-height:0;padding:13px;margin-bottom:22px;gap:12px}
-  .app-sidebar-brand{padding-bottom:11px}
-  .app-nav{display:flex;flex-direction:row;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}
-  .app-nav-label,.app-sidebar-foot{display:none}
-  .app-nav-link{width:auto;min-width:max-content;padding:10px 12px}
-  .app-nav-meta{display:none}
-  .app-content>.top{margin-bottom:25px}
+  .app-sidebar{
+    position:fixed;z-index:1002;top:0;left:0;width:min(82vw,310px);height:100dvh;min-height:100dvh;
+    margin:0;padding:18px 14px;border-radius:0 18px 18px 0;overflow-y:auto;
+    transform:translateX(-105%);transition:transform .22s ease;
+  }
+  .app-sidebar.is-open{transform:translateX(0)}
+  .app-sidebar-brand{padding-bottom:14px}
+  .app-nav{display:flex;flex-direction:column;overflow:visible;padding:0}
+  .app-nav-label,.app-sidebar-foot{display:block}
+  .app-nav-link{width:100%;min-width:0;padding:12px 10px}
+  .app-nav-meta{display:inline}
+  .app-content>.top{margin-bottom:25px;justify-content:flex-start}
+  .app-content>.top .status{margin-left:auto}
+  .nav-menu-toggle{
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;
+    border:1px solid var(--line);border-radius:11px;background:#17263a;color:var(--text);
+    font-size:21px;cursor:pointer;
+  }
+  .nav-menu-backdrop{position:fixed;inset:0;z-index:1001;background:rgba(2,8,16,.66);opacity:0;pointer-events:none;transition:opacity .2s}
+  .nav-menu-backdrop.is-visible{opacity:1;pointer-events:auto}
+  body.nav-menu-lock{overflow:hidden}
 }
+@media(min-width:901px){.nav-menu-toggle,.nav-menu-backdrop{display:none!important}}
 @media(max-width:600px){
   .wrap{width:calc(100% - 24px);padding-top:12px}
   .nav-dashboard-grid{grid-template-columns:1fr}
