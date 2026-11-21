@@ -94,12 +94,7 @@
   }
 
   const descriptions = {
-    companies: {
-      kicker: "Cadastro e seleção",
-      title: "Empresas conectadas",
-      text: "A listagem de fichas continua disponível no seletor de empresa da área de trabalho. Nesta etapa, estamos preparando uma tela própria para organizar as empresas por conta Google, endereço e situação.",
-      items: ["Visualizar fichas de todas as contas autorizadas", "Identificar a conta Google responsável por cada ficha", "Abrir avaliações, publicações e relatórios por empresa"]
-    },
+
     reports: {
       kicker: "Módulo em desenvolvimento",
       title: "Relatórios de desempenho",
@@ -135,6 +130,128 @@
       : "Conecte uma conta Google para carregar as fichas disponíveis.";
   }
 
+  function formatAddress(address) {
+    if (!address) return "Endereço não informado pelo Google";
+    if (typeof address === "string") return address;
+    return [
+      ...(address.addressLines || []),
+      address.locality,
+      address.administrativeArea,
+      address.postalCode
+    ].filter(Boolean).join(", ") || "Endereço não informado pelo Google";
+  }
+
+  function renderCompanies() {
+    if (!placeholder || !placeholder.classList.contains("nav-section-hidden") && !placeholder.querySelector(".companies-panel")) {
+      // A tela é montada apenas quando a seção Empresas é aberta.
+    }
+    const data = typeof locations !== "undefined" && Array.isArray(locations) ? locations : [];
+    placeholder.innerHTML = "";
+    const section = document.createElement("div");
+    section.className = "companies-panel";
+    const heading = document.createElement("div");
+    heading.className = "companies-heading";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "nav-placeholder-kicker";
+    kicker.textContent = "Cadastro e seleção";
+    const title = document.createElement("h2");
+    title.textContent = "Empresas conectadas";
+    const description = document.createElement("p");
+    description.textContent = "Consulte as fichas retornadas pela conta Google conectada nesta sessão e escolha qual deseja gerenciar.";
+    copy.append(kicker, title, description);
+    const count = document.createElement("div");
+    count.className = "companies-count";
+    count.textContent = data.length + (data.length === 1 ? " empresa" : " empresas");
+    heading.append(copy, count);
+    section.append(heading);
+
+    if (!data.length) {
+      const empty = document.createElement("div");
+      empty.className = "companies-empty";
+      empty.textContent = "Nenhuma ficha carregada. Conecte uma conta Google para consultar as empresas às quais ela tem acesso.";
+      section.append(empty);
+      placeholder.append(section);
+      return;
+    }
+
+    const controls = document.createElement("div");
+    controls.className = "companies-controls";
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "companies-search";
+    search.placeholder = "Buscar por nome, endereço ou site...";
+    search.setAttribute("aria-label", "Buscar empresas");
+    const scope = document.createElement("span");
+    scope.className = "companies-scope";
+    scope.textContent = "Conta Google desta sessão";
+    controls.append(search, scope);
+    section.append(controls);
+
+    const list = document.createElement("div");
+    list.className = "companies-list";
+    section.append(list);
+
+    function draw(query = "") {
+      list.innerHTML = "";
+      const term = query.trim().toLocaleLowerCase("pt-BR");
+      const filtered = data.filter(loc => [
+        loc.title, formatAddress(loc.address), loc.websiteUri
+      ].join(" ").toLocaleLowerCase("pt-BR").includes(term));
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "companies-empty";
+        empty.textContent = "Nenhuma empresa corresponde à busca.";
+        list.append(empty);
+        return;
+      }
+      filtered.forEach(loc => {
+        const originalIndex = data.indexOf(loc);
+        const card = document.createElement("article");
+        card.className = "company-card";
+        const info = document.createElement("div");
+        info.className = "company-info";
+        const name = document.createElement("h3");
+        name.textContent = loc.title || loc.name || "Empresa sem nome";
+        const address = document.createElement("p");
+        address.textContent = formatAddress(loc.address);
+        info.append(name, address);
+        if (loc.websiteUri) {
+          const site = document.createElement("a");
+          site.href = loc.websiteUri;
+          site.target = "_blank";
+          site.rel = "noopener noreferrer";
+          site.textContent = loc.websiteUri.replace(/^https?:\/\//, "").replace(/\/$/, "");
+          info.append(site);
+        }
+        const actions = document.createElement("div");
+        actions.className = "company-actions";
+        const selected = typeof selectedLocation !== "undefined" && selectedLocation?.name === loc.name;
+        const status = document.createElement("span");
+        status.className = "company-status" + (selected ? " is-selected" : "");
+        status.textContent = selected ? "Selecionada" : "Disponível";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn " + (selected ? "secondary" : "primary");
+        button.textContent = selected ? "Empresa atual" : "Gerenciar empresa";
+        button.disabled = selected;
+        button.addEventListener("click", () => {
+          const selector = document.getElementById("locationSelect");
+          if (!selector) return;
+          selector.value = String(originalIndex);
+          selector.dispatchEvent(new Event("change", { bubbles: true }));
+          renderCompanies();
+        });
+        actions.append(status, button);
+        card.append(info, actions);
+        list.append(card);
+      });
+    }
+    search.addEventListener("input", () => draw(search.value));
+    draw();
+    placeholder.append(section);
+  }
+
   const refreshReviewsButton = document.getElementById("refreshBtn");
 
   function setView(view) {
@@ -146,6 +263,7 @@
       const item = descriptions[view];
       placeholder.innerHTML = `<div class="nav-placeholder-card"><div class="nav-placeholder-kicker">${item.kicker}</div><h2>${item.title}</h2><p>${item.text}</p><ul class="nav-placeholder-list">${item.items.map(value => "<li>" + value + "</li>").join("")}</ul></div>`;
     }
+    if (view === "companies") renderCompanies();
     if (view === "reviews" || view === "publications") {
       if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
       if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
@@ -170,7 +288,14 @@
   }));
 
   const locationSelect = document.getElementById("locationSelect");
-  if (locationSelect) locationSelect.addEventListener("change", updateCompanySummary);
+  if (locationSelect) locationSelect.addEventListener("change", () => {
+    updateCompanySummary();
+    if (sidebar.querySelector('[data-view="companies"]')?.classList.contains("active")) renderCompanies();
+  });
+  window.addEventListener("rsa:locations-updated", () => {
+    updateCompanySummary();
+    if (sidebar.querySelector('[data-view="companies"]')?.classList.contains("active")) renderCompanies();
+  });
   const connectButton = document.getElementById("connectBtn");
   if (connectButton) connectButton.addEventListener("click", () => setTimeout(updateCompanySummary, 700));
   setView("overview");
