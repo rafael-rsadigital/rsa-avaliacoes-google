@@ -254,6 +254,271 @@
     placeholder.append(section);
   }
 
+  function renderReports() {
+    placeholder.innerHTML = "";
+    const section = document.createElement("div");
+    section.className = "reports-panel";
+    const heading = document.createElement("div");
+    heading.className = "companies-heading";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "nav-placeholder-kicker";
+    kicker.textContent = "Desempenho do Perfil da Empresa";
+    const title = document.createElement("h2");
+    title.textContent = "Relatórios Google";
+    const description = document.createElement("p");
+    description.textContent = "Consulte métricas oficiais de visualizações e interações. Os resultados dependem da disponibilidade da Performance API e da cota liberada para o projeto Google.";
+    copy.append(kicker, title, description);
+    heading.append(copy);
+    section.append(heading);
+
+    const controls = document.createElement("div");
+    controls.className = "reports-controls";
+    const accountSelect = document.createElement("select");
+    accountSelect.className = "companies-search";
+    accountSelect.innerHTML = '<option value="">Selecione uma conta Google</option>';
+    const locationSelect = document.createElement("select");
+    locationSelect.className = "companies-search";
+    locationSelect.disabled = true;
+    locationSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+    const start = document.createElement("input");
+    start.type = "date";
+    start.className = "reports-date";
+    start.setAttribute("aria-label", "Data inicial");
+    const end = document.createElement("input");
+    end.type = "date";
+    end.className = "reports-date";
+    end.setAttribute("aria-label", "Data final");
+    const run = document.createElement("button");
+    run.type = "button";
+    run.className = "btn primary";
+    run.textContent = "Consultar relatório";
+    run.disabled = true;
+    const now = new Date();
+    const toIso = date => [date.getFullYear(), String(date.getMonth()+1).padStart(2,"0"), String(date.getDate()).padStart(2,"0")].join("-");
+    const initialEnd = toIso(now);
+    const initialStartDate = new Date(now);
+    initialStartDate.setDate(initialStartDate.getDate()-29);
+    start.value = toIso(initialStartDate);
+    end.value = initialEnd;
+    end.max = initialEnd;
+    start.max = initialEnd;
+    controls.append(accountSelect, locationSelect, start, end, run);
+    section.append(controls);
+
+    const presets = document.createElement("div");
+    presets.className = "reports-presets";
+    [30, 90].forEach(days => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn secondary";
+      button.textContent = "Últimos " + days + " dias";
+      button.addEventListener("click", () => {
+        const endDate = new Date();
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate()-(days-1));
+        start.value = toIso(startDate);
+        end.value = toIso(endDate);
+      });
+      presets.append(button);
+    });
+    section.append(presets);
+
+    const status = document.createElement("div");
+    status.className = "accounts-message";
+    status.setAttribute("aria-live", "polite");
+    section.append(status);
+    const results = document.createElement("div");
+    results.className = "reports-results";
+    section.append(results);
+
+    if (!adminAccessKey) {
+      status.className = "accounts-message is-error";
+      status.textContent = "Primeiro consulte suas contas na aba Contas Google usando a chave de configuração.";
+      const go = document.createElement("button");
+      go.type = "button";
+      go.className = "btn secondary";
+      go.textContent = "Abrir Contas Google";
+      go.addEventListener("click", () => sidebar.querySelector('[data-view="accounts"]')?.click());
+      section.append(go);
+      placeholder.append(section);
+      return;
+    }
+
+    let accounts = [];
+    function populateLocations() {
+      const account = accounts.find(item => item.id === accountSelect.value);
+      locationSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+      (account?.locations || []).forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.locationId || "";
+        option.textContent = location.title || location.name;
+        locationSelect.append(option);
+      });
+      locationSelect.disabled = !account?.locations?.length;
+      run.disabled = !locationSelect.value;
+    }
+    accountSelect.addEventListener("change", populateLocations);
+    locationSelect.addEventListener("change", () => { run.disabled = !locationSelect.value; });
+
+    async function loadAccounts() {
+      status.textContent = "Carregando contas e fichas…";
+      try {
+        const response = await fetch("/api/google/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
+        accounts = data.accounts || [];
+        accounts.filter(item => item.status === "connected").forEach(account => {
+          const option = document.createElement("option");
+          option.value = account.id;
+          option.textContent = account.label + " (" + account.locationCount + " fichas)";
+          accountSelect.append(option);
+        });
+        status.className = "accounts-message is-success";
+        status.textContent = "Selecione uma conta, uma ficha e o período do relatório.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      }
+    }
+
+    const metricLabels = {
+      BUSINESS_IMPRESSIONS_DESKTOP_MAPS: "Visualizações no Maps (computador)",
+      BUSINESS_IMPRESSIONS_DESKTOP_SEARCH: "Visualizações na Pesquisa (computador)",
+      BUSINESS_IMPRESSIONS_MOBILE_MAPS: "Visualizações no Maps (celular)",
+      BUSINESS_IMPRESSIONS_MOBILE_SEARCH: "Visualizações na Pesquisa (celular)",
+      WEBSITE_CLICKS: "Cliques no site",
+      CALL_CLICKS: "Cliques para ligar",
+      BUSINESS_DIRECTION_REQUESTS: "Solicitações de rota"
+    };
+    const total = values => values.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    function metricCard(label, value) {
+      const card = document.createElement("article");
+      card.className = "report-metric";
+      const number = document.createElement("strong");
+      number.textContent = Number(value).toLocaleString("pt-BR");
+      const caption = document.createElement("span");
+      caption.textContent = label;
+      card.append(number, caption);
+      return card;
+    }
+
+    run.addEventListener("click", async () => {
+      if (!accountSelect.value || !locationSelect.value) return;
+      if (!start.value || !end.value || start.value > end.value) {
+        status.className = "accounts-message is-error";
+        status.textContent = "Informe um período válido, com a data inicial anterior à final.";
+        return;
+      }
+      run.disabled = true;
+      run.textContent = "Consultando…";
+      status.className = "accounts-message";
+      status.textContent = "Buscando métricas oficiais no Google…";
+      results.innerHTML = "";
+      try {
+        const response = await fetch("/api/google/performance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: adminAccessKey,
+            accountKey: accountSelect.value,
+            locationId: locationSelect.value,
+            startDate: start.value,
+            endDate: end.value
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível consultar o relatório.");
+        const metrics = data.metrics || [];
+        const available = metrics.filter(metric => !metric.error);
+        const failed = metrics.filter(metric => metric.error);
+        if (!available.length) {
+          throw new Error(failed[0]?.error || "A Performance API não retornou métricas. Verifique se ela está habilitada e se o projeto possui cota.");
+        }
+        const byName = Object.fromEntries(metrics.map(metric => [metric.metric, metric]));
+        const impressionsNames = [
+          "BUSINESS_IMPRESSIONS_DESKTOP_MAPS", "BUSINESS_IMPRESSIONS_DESKTOP_SEARCH",
+          "BUSINESS_IMPRESSIONS_MOBILE_MAPS", "BUSINESS_IMPRESSIONS_MOBILE_SEARCH"
+        ];
+        const impressions = impressionsNames.reduce((sum, name) => sum + total(byName[name]?.values || []), 0);
+        const website = total(byName.WEBSITE_CLICKS?.values || []);
+        const calls = total(byName.CALL_CLICKS?.values || []);
+        const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);
+        const cards = document.createElement("div");
+        cards.className = "reports-metrics-grid";
+        cards.append(
+          metricCard("Visualizações (Pesquisa + Maps)", impressions),
+          metricCard("Cliques no site", website),
+          metricCard("Cliques para ligar", calls),
+          metricCard("Solicitações de rota", directions)
+        );
+        results.append(cards);
+
+        const daily = new Map();
+        impressionsNames.forEach(name => (byName[name]?.values || []).forEach(item => {
+          daily.set(item.date, (daily.get(item.date) || 0) + Number(item.value || 0));
+        }));
+        const series = [...daily.entries()].sort((a,b) => a[0].localeCompare(b[0]));
+        if (series.length) {
+          const chartTitle = document.createElement("h3");
+          chartTitle.className = "reports-chart-title";
+          chartTitle.textContent = "Visualizações diárias";
+          results.append(chartTitle);
+          const chart = document.createElement("div");
+          chart.className = "reports-bars";
+          const max = Math.max(1, ...series.map(item => item[1]));
+          series.forEach(([date, value]) => {
+            const column = document.createElement("div");
+            column.className = "reports-bar-column";
+            const bar = document.createElement("div");
+            bar.className = "reports-bar";
+            bar.style.height = Math.max(3, value/max*100) + "%";
+            bar.title = new Date(date + "T12:00:00").toLocaleDateString("pt-BR") + ": " + value.toLocaleString("pt-BR");
+            const label = document.createElement("span");
+            label.textContent = date.slice(8,10);
+            column.append(bar, label);
+            chart.append(column);
+          });
+          results.append(chart);
+        }
+        const detail = document.createElement("details");
+        detail.className = "reports-details";
+        const summary = document.createElement("summary");
+        summary.textContent = "Ver métricas individuais";
+        detail.append(summary);
+        const list = document.createElement("ul");
+        metrics.forEach(metric => {
+          const item = document.createElement("li");
+          const name = document.createElement("span");
+          name.textContent = metricLabels[metric.metric] || metric.metric;
+          const value = document.createElement("strong");
+          value.textContent = metric.error ? "Indisponível" : total(metric.values).toLocaleString("pt-BR");
+          item.append(name, value);
+          if (metric.error) item.title = metric.error;
+          list.append(item);
+        });
+        detail.append(list);
+        results.append(detail);
+        status.className = failed.length ? "accounts-message" : "accounts-message is-success";
+        status.textContent = failed.length
+          ? "Relatório parcial: " + available.length + " de " + metrics.length + " métricas disponíveis. Métricas indisponíveis podem exigir habilitação ou cota da API."
+          : "Relatório concluído. Dados retornados pela API oficial do Google.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message + " A Performance API pode exigir habilitação no Google Cloud e liberação de cota.";
+      } finally {
+        run.disabled = !locationSelect.value;
+        run.textContent = "Consultar relatório";
+      }
+    });
+    placeholder.append(section);
+    loadAccounts();
+  }
+
   function renderAudit() {
     placeholder.innerHTML = "";
     const section = document.createElement("div");
@@ -606,6 +871,7 @@
     if (view === "companies") renderCompanies();
     if (view === "accounts") renderAccounts();
     if (view === "audit") renderAudit();
+    if (view === "reports") renderReports();
     if (view === "reviews" || view === "publications") {
       if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
       if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
