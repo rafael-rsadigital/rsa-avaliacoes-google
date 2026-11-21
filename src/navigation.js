@@ -254,6 +254,297 @@
     placeholder.append(section);
   }
 
+  function renderCreateCompany() {
+    placeholder.innerHTML = "";
+    const section = document.createElement("div");
+    section.className = "create-company-panel";
+    const heading = document.createElement("div");
+    heading.className = "companies-heading";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "nav-placeholder-kicker";
+    kicker.textContent = "Novo Perfil da Empresa";
+    const title = document.createElement("h2");
+    title.textContent = "Criar empresa no Google";
+    const description = document.createElement("p");
+    description.textContent = "Preencha os dados, escolha uma categoria oficial e valide as informações antes de enviar a criação ao Google.";
+    copy.append(kicker, title, description);
+    heading.append(copy);
+    section.append(heading);
+
+    const warning = document.createElement("p");
+    warning.className = "create-company-warning";
+    warning.textContent = "A criação não garante publicação imediata. O Google pode exigir uma etapa de verificação para liberar a ficha na Pesquisa e no Maps. Esta versão cadastra empresas com endereço físico.";
+    section.append(warning);
+
+    const form = document.createElement("div");
+    form.className = "create-company-form";
+    function field(labelText, type, placeholderText, required = false, maxLength = 250) {
+      const wrap = document.createElement("label");
+      wrap.className = "create-field";
+      const label = document.createElement("span");
+      label.textContent = labelText + (required ? " *" : "");
+      const input = document.createElement("input");
+      input.type = type;
+      input.placeholder = placeholderText || "";
+      input.maxLength = maxLength;
+      input.required = required;
+      wrap.append(label, input);
+      form.append(wrap);
+      return input;
+    }
+    const account = document.createElement("select");
+    account.className = "companies-search";
+    account.innerHTML = '<option value="">Selecione a conta Google proprietária</option>';
+    const accountWrap = document.createElement("label");
+    accountWrap.className = "create-field create-field-wide";
+    const accountLabel = document.createElement("span");
+    accountLabel.textContent = "Conta Google *";
+    accountWrap.append(accountLabel, account);
+    form.append(accountWrap);
+    const name = field("Nome da empresa", "text", "Nome que será exibido no Google", true, 100);
+    const street = field("Endereço / rua e número", "text", "Rua, avenida e número", true, 200);
+    const city = field("Cidade", "text", "Cidade", true, 100);
+    const state = field("Estado (UF)", "text", "Ex.: SP", true, 80);
+    const postal = field("CEP", "text", "00000-000", true, 20);
+    const phone = field("Telefone", "tel", "(00) 00000-0000", false, 40);
+    const website = field("Site (HTTPS)", "url", "https://www.empresa.com.br", false, 300);
+    const description = document.createElement("textarea");
+    description.maxLength = 750;
+    description.placeholder = "Descrição objetiva da empresa (até 750 caracteres)";
+    const descriptionWrap = document.createElement("label");
+    descriptionWrap.className = "create-field create-field-wide";
+    const descriptionLabel = document.createElement("span");
+    descriptionLabel.textContent = "Descrição da empresa";
+    descriptionWrap.append(descriptionLabel, description);
+    form.append(descriptionWrap);
+
+    const categoryRow = document.createElement("div");
+    categoryRow.className = "create-category-row";
+    const categorySearch = document.createElement("input");
+    categorySearch.className = "companies-search";
+    categorySearch.placeholder = "Buscar categoria (ex.: oficina mecânica)";
+    categorySearch.setAttribute("aria-label", "Buscar categoria oficial do Google");
+    categorySearch.maxLength = 80;
+    const searchCategory = document.createElement("button");
+    searchCategory.type = "button";
+    searchCategory.className = "btn secondary";
+    searchCategory.textContent = "Buscar categoria";
+    categoryRow.append(categorySearch, searchCategory);
+    const categoryWrap = document.createElement("div");
+    categoryWrap.className = "create-field create-field-wide";
+    const categoryLabel = document.createElement("span");
+    categoryLabel.textContent = "Categoria principal *";
+    const categorySelect = document.createElement("select");
+    categorySelect.className = "companies-search";
+    categorySelect.innerHTML = '<option value="">Busque e selecione uma categoria oficial</option>';
+    categoryWrap.append(categoryLabel, categoryRow, categorySelect);
+    form.append(categoryWrap);
+
+    const actions = document.createElement("div");
+    actions.className = "create-actions";
+    const validate = document.createElement("button");
+    validate.type = "button";
+    validate.className = "btn primary";
+    validate.textContent = "Validar dados";
+    const create = document.createElement("button");
+    create.type = "button";
+    create.className = "btn primary";
+    create.textContent = "Criar ficha no Google";
+    create.hidden = true;
+    actions.append(validate, create);
+    form.append(actions);
+
+    const status = document.createElement("div");
+    status.className = "accounts-message";
+    status.setAttribute("aria-live", "polite");
+    const result = document.createElement("div");
+    result.className = "create-company-result";
+    section.append(form, status, result);
+    let accounts = [];
+    let validatedPayload = null;
+    let busy = false;
+
+    if (!adminAccessKey) {
+      status.className = "accounts-message is-error";
+      status.textContent = "Primeiro abra Contas Google e consulte as contas usando a chave de configuração.";
+      const go = document.createElement("button");
+      go.type = "button";
+      go.className = "btn secondary";
+      go.textContent = "Abrir Contas Google";
+      go.addEventListener("click", () => sidebar.querySelector('[data-view="accounts"]')?.click());
+      section.insertBefore(go, form);
+      form.hidden = true;
+      placeholder.append(section);
+      return;
+    }
+
+    async function loadAccounts() {
+      status.textContent = "Carregando contas comerciais disponíveis…";
+      try {
+        const response = await fetch("/api/google/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível carregar as contas.");
+        accounts = data.accounts || [];
+        accounts.forEach(item => {
+          if (item.status !== "connected") return;
+          (item.googleAccounts || []).forEach(parent => {
+            const option = document.createElement("option");
+            option.value = JSON.stringify({ accountKey: item.id, parentAccountName: parent.name });
+            option.textContent = (item.label || "Conta Google") + " — " + (parent.accountName || parent.name);
+            account.append(option);
+          });
+        });
+        status.className = "accounts-message is-success";
+        status.textContent = account.options.length > 1
+          ? "Selecione a conta comercial na qual a nova ficha será criada."
+          : "Nenhuma conta comercial disponível para criação.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      }
+    }
+
+    searchCategory.addEventListener("click", async () => {
+      const selectedAccount = account.value;
+      const query = categorySearch.value.trim();
+      if (!selectedAccount || query.length < 2) {
+        status.className = "accounts-message is-error";
+        status.textContent = "Selecione a conta e informe pelo menos duas letras para buscar a categoria.";
+        return;
+      }
+      const selected = JSON.parse(selectedAccount);
+      searchCategory.disabled = true;
+      searchCategory.textContent = "Buscando…";
+      try {
+        const response = await fetch("/api/google/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey, accountKey: selected.accountKey, query })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível buscar categorias.");
+        categorySelect.innerHTML = '<option value="">Selecione a categoria correta</option>';
+        (data.categories || []).forEach(category => {
+          const option = document.createElement("option");
+          option.value = category.name;
+          option.textContent = category.displayName;
+          categorySelect.append(option);
+        });
+        status.className = data.categories?.length ? "accounts-message is-success" : "accounts-message is-error";
+        status.textContent = data.categories?.length
+          ? data.categories.length + " categoria(s) encontrada(s). Escolha a que melhor representa a atividade principal."
+          : "Nenhuma categoria encontrada. Tente outro termo; a busca do Google considera o início do nome.";
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      } finally {
+        searchCategory.disabled = false;
+        searchCategory.textContent = "Buscar categoria";
+      }
+    });
+
+    function collectPayload() {
+      let selected;
+      try { selected = JSON.parse(account.value); } catch {}
+      return {
+        key: adminAccessKey,
+        accountKey: selected?.accountKey || "",
+        parentAccountName: selected?.parentAccountName || "",
+        title: name.value.trim(),
+        categoryName: categorySelect.value,
+        street: street.value.trim(),
+        city: city.value.trim(),
+        state: state.value.trim(),
+        postalCode: postal.value.trim(),
+        phone: phone.value.trim(),
+        website: website.value.trim(),
+        description: description.value.trim()
+      };
+    }
+
+    validate.addEventListener("click", async () => {
+      const payload = collectPayload();
+      if (!payload.accountKey || !payload.title || !payload.categoryName || !payload.street || !payload.city || !payload.state || !payload.postalCode) {
+        status.className = "accounts-message is-error";
+        status.textContent = "Preencha os campos obrigatórios e selecione uma categoria oficial do Google.";
+        return;
+      }
+      if (busy) return;
+      busy = true;
+      validate.disabled = true;
+      validate.textContent = "Validando…";
+      create.hidden = true;
+      result.innerHTML = "";
+      try {
+        const response = await fetch("/api/google/create-location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, mode: "validate" })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "O Google não aceitou a validação.");
+        validatedPayload = { ...payload, requestId: data.requestId };
+        status.className = "accounts-message is-success";
+        status.textContent = data.message || "Dados validados.";
+        create.hidden = false;
+        const preview = document.createElement("div");
+        preview.className = "create-preview";
+        preview.textContent = payload.title + " · " + categorySelect.selectedOptions[0].textContent + " · " + [payload.street, payload.city, payload.state, payload.postalCode].filter(Boolean).join(", ");
+        result.append(preview);
+      } catch (error) {
+        validatedPayload = null;
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      } finally {
+        busy = false;
+        validate.disabled = false;
+        validate.textContent = "Validar dados";
+      }
+    });
+
+    create.addEventListener("click", async () => {
+      if (!validatedPayload || busy) return;
+      if (!confirm("Confirma a criação da ficha “" + validatedPayload.title + "” na conta Google selecionada? Esta ação enviará o cadastro ao Google.")) return;
+      busy = true;
+      create.disabled = true;
+      create.textContent = "Enviando…";
+      try {
+        const response = await fetch("/api/google/create-location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...validatedPayload, mode: "create" })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Não foi possível criar a ficha.");
+        status.className = "accounts-message is-success";
+        status.textContent = data.message || "Ficha criada.";
+        result.innerHTML = "";
+        const created = document.createElement("div");
+        created.className = "create-preview";
+        created.textContent = (data.location?.title || validatedPayload.title) + " · " + (data.location?.name || "Cadastro recebido pelo Google");
+        result.append(created);
+        create.hidden = true;
+        validate.textContent = "Validar outra ficha";
+        validatedPayload = null;
+      } catch (error) {
+        status.className = "accounts-message is-error";
+        status.textContent = error.message;
+      } finally {
+        busy = false;
+        create.disabled = false;
+        create.textContent = "Criar ficha no Google";
+      }
+    });
+
+    placeholder.append(section);
+    loadAccounts();
+  }
+
   function renderReports() {
     placeholder.innerHTML = "";
     const section = document.createElement("div");
@@ -872,6 +1163,7 @@
     if (view === "accounts") renderAccounts();
     if (view === "audit") renderAudit();
     if (view === "reports") renderReports();
+    if (view === "create") renderCreateCompany();
     if (view === "reviews" || view === "publications") {
       if (reviewsSection) reviewsSection.classList.remove("nav-section-hidden");
       if (publicationsSection) publicationsSection.classList.remove("nav-section-hidden");
