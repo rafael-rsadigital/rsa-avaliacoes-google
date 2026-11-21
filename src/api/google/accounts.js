@@ -17,14 +17,23 @@ export default async function handler(req, res) {
         const token = await getGoogleAccessToken(account.id);
         const [locations, accountResponse] = await Promise.all([
           listGoogleLocations(token),
-          fetch("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
-            headers: { Authorization: "Bearer " + token },
-            cache: "no-store"
-          }).then(async response => {
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error?.message || "Não foi possível listar as contas comerciais.");
-            return data.accounts || [];
-          })
+          (async () => {
+            const collected = [];
+            let pageToken = "";
+            do {
+              const url = new URL("https://mybusinessaccountmanagement.googleapis.com/v1/accounts");
+              if (pageToken) url.searchParams.set("pageToken", pageToken);
+              const response = await fetch(url, {
+                headers: { Authorization: "Bearer " + token },
+                cache: "no-store"
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(data.error?.message || "Não foi possível listar as contas comerciais.");
+              collected.push(...(data.accounts || []));
+              pageToken = data.nextPageToken || "";
+            } while (pageToken);
+            return collected;
+          })()
         ]);
         return {
           id: account.id,
