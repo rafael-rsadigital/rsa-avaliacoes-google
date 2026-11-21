@@ -144,10 +144,6 @@
   }
 
   function renderCompanies() {
-    if (!placeholder || !placeholder.classList.contains("nav-section-hidden") && !placeholder.querySelector(".companies-panel")) {
-      // A tela é montada apenas quando a seção Empresas é aberta.
-    }
-    const data = typeof locations !== "undefined" && Array.isArray(locations) ? locations : [];
     placeholder.innerHTML = "";
     const section = document.createElement("div");
     section.className = "companies-panel";
@@ -160,55 +156,62 @@
     const title = document.createElement("h2");
     title.textContent = "Empresas conectadas";
     const description = document.createElement("p");
-    description.textContent = "Consulte as fichas retornadas pela conta Google conectada nesta sessão e escolha qual deseja gerenciar.";
+    description.textContent = "Consulte as fichas de todas as contas Google autorizadas e escolha qual deseja gerenciar.";
     copy.append(kicker, title, description);
     const count = document.createElement("div");
     count.className = "companies-count";
-    count.textContent = data.length + (data.length === 1 ? " empresa" : " empresas");
+    count.textContent = "Carregando…";
     heading.append(copy, count);
     section.append(heading);
-
-    if (!data.length) {
-      const empty = document.createElement("div");
-      empty.className = "companies-empty";
-      empty.textContent = "Nenhuma ficha carregada. Conecte uma conta Google para consultar as empresas às quais ela tem acesso.";
-      section.append(empty);
-      placeholder.append(section);
-      return;
-    }
-
+    const message = document.createElement("div");
+    message.className = "accounts-message";
+    message.setAttribute("aria-live", "polite");
+    section.append(message);
     const controls = document.createElement("div");
     controls.className = "companies-controls";
     const search = document.createElement("input");
     search.type = "search";
     search.className = "companies-search";
-    search.placeholder = "Buscar por nome, endereço ou site...";
+    search.placeholder = "Buscar por nome, endereço, site ou conta...";
     search.setAttribute("aria-label", "Buscar empresas");
     const scope = document.createElement("span");
     scope.className = "companies-scope";
-    scope.textContent = "Conta Google desta sessão";
+    scope.textContent = "Todas as contas Google conectadas";
     controls.append(search, scope);
     section.append(controls);
-
     const list = document.createElement("div");
     list.className = "companies-list";
     section.append(list);
+    placeholder.append(section);
 
+    if (!adminAccessKey) {
+      count.textContent = "—";
+      message.className = "accounts-message is-error";
+      message.textContent = "Para reunir as fichas de todas as contas, primeiro consulte as autorizações na aba Contas Google.";
+      const go = document.createElement("button");
+      go.type = "button";
+      go.className = "btn secondary";
+      go.textContent = "Abrir Contas Google";
+      go.addEventListener("click", () => sidebar.querySelector('[data-view="accounts"]')?.click());
+      section.append(go);
+      return;
+    }
+
+    let data = [];
     function draw(query = "") {
       list.innerHTML = "";
       const term = query.trim().toLocaleLowerCase("pt-BR");
       const filtered = data.filter(loc => [
-        loc.title, formatAddress(loc.address), loc.websiteUri
+        loc.title, formatAddress(loc.address), loc.websiteUri, loc.accountLabel, loc.accountName
       ].join(" ").toLocaleLowerCase("pt-BR").includes(term));
       if (!filtered.length) {
         const empty = document.createElement("div");
         empty.className = "companies-empty";
-        empty.textContent = "Nenhuma empresa corresponde à busca.";
+        empty.textContent = data.length ? "Nenhuma empresa corresponde à busca." : "Nenhuma ficha encontrada nas contas consultadas.";
         list.append(empty);
         return;
       }
       filtered.forEach(loc => {
-        const originalIndex = data.indexOf(loc);
         const card = document.createElement("article");
         card.className = "company-card";
         const info = document.createElement("div");
@@ -217,7 +220,10 @@
         name.textContent = loc.title || loc.name || "Empresa sem nome";
         const address = document.createElement("p");
         address.textContent = formatAddress(loc.address);
-        info.append(name, address);
+        const account = document.createElement("p");
+        account.className = "company-account-label";
+        account.textContent = "Conta: " + (loc.accountLabel || "Conta Google");
+        info.append(name, address, account);
         if (loc.websiteUri) {
           const site = document.createElement("a");
           site.href = loc.websiteUri;
@@ -240,9 +246,9 @@
         button.addEventListener("click", () => {
           const selector = document.getElementById("locationSelect");
           if (!selector) return;
-          selector.value = String(originalIndex);
+          selector.value = String(data.indexOf(loc));
           selector.dispatchEvent(new Event("change", { bubbles: true }));
-          renderCompanies();
+          sidebar.querySelector('[data-view="reviews"]')?.click();
         });
         actions.append(status, button);
         card.append(info, actions);
@@ -250,8 +256,37 @@
       });
     }
     search.addEventListener("input", () => draw(search.value));
-    draw();
-    placeholder.append(section);
+
+    (async () => {
+      try {
+        message.textContent = "Consultando as fichas de todas as contas…";
+        const response = await fetch("/api/google/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: adminAccessKey })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || "Não foi possível carregar as empresas.");
+        (result.accounts || []).forEach(account => {
+          if (account.status !== "connected") return;
+          (account.locations || []).forEach(location => data.push({
+            ...location,
+            accountKey: account.id,
+            accountLabel: account.label || "Conta Google"
+          }));
+        });
+        count.textContent = data.length + (data.length === 1 ? " empresa" : " empresas");
+        message.className = "accounts-message is-success";
+        message.textContent = "Fichas reunidas a partir de " + (result.accounts || []).filter(item => item.status === "connected").length + " conta(s) Google autorizada(s).";
+        window.rsaAdminAccessKey = adminAccessKey;
+        window.dispatchEvent(new CustomEvent("rsa:all-locations-loaded", { detail: { locations: data } }));
+        draw();
+      } catch (error) {
+        count.textContent = "—";
+        message.className = "accounts-message is-error";
+        message.textContent = error.message;
+      }
+    })();
   }
 
   function renderCreateCompany() {
@@ -1082,6 +1117,7 @@
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível consultar as contas.");
         adminAccessKey = secret;
+        window.rsaAdminAccessKey = secret;
         const accounts = data.accounts || [];
         message.className = "accounts-message is-success";
         message.textContent = accounts.length
