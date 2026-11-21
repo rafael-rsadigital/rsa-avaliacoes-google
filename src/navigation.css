@@ -147,3 +147,23 @@
  .account-card{grid-template-columns:1fr}
  .account-status{white-space:normal}
 }
+
+
+/* Auditoria e SEO local */
+.audit-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.audit-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin:22px 0 12px}
+.audit-results{margin-top:18px}
+.audit-score{display:flex;align-items:center;gap:12px;background:#101d2e;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:18px}
+.audit-score strong{font:800 25px Manrope;color:var(--gold)}
+.audit-score span{font-size:12px;color:var(--muted)}
+.audit-company-title{font:700 18px Manrope;margin:0 0 5px}
+.audit-meta{font-size:12px;color:var(--muted);margin:0 0 15px}
+.audit-checks{display:grid;gap:9px}
+.audit-check{display:flex;gap:11px;align-items:flex-start;background:#101d2e;border:1px solid var(--line);border-radius:10px;padding:12px}
+.audit-check-mark{width:23px;height:23px;display:grid;place-items:center;flex:0 0 23px;border-radius:50%;font-weight:800;font-size:13px}
+.audit-check.is-ok .audit-check-mark{background:#153b30;color:#80d9b0}
+.audit-check.is-missing .audit-check-mark{background:#412b30;color:#ffb2b8}
+.audit-check strong{font-size:12px}
+.audit-check p{font-size:12px;line-height:1.5;color:var(--muted);margin:4px 0 0;overflow-wrap:anywhere}
+.audit-disclaimer{font-size:11px;line-height:1.5;color:var(--muted);margin:14px 0 0}
+@media(max-width:700px){.audit-controls{grid-template-columns:1fr}.audit-panel{padding:17px}}
