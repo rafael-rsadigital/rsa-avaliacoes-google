@@ -10,6 +10,16 @@ Aplicação para consultar avaliações do Google Business Profile e publicar re
 - Supabase: guarda somente o refresh token Google criptografado com AES-256-GCM.
 - Vercel: executa as rotas e mantém os segredos do servidor.
 
+## Publicações no Google
+
+A central web também permite publicar imagens usando links públicos HTTPS, sem transferir o armazenamento do Manus:
+
+- Galeria: `POST /api/media`, com `locationName`, `sourceUrl` e categoria.
+- Atualização: `POST /api/local-posts`, com `locationName`, `sourceUrl`, texto e botão opcional.
+- As duas rotas recebem o access token Google da sessão do navegador no cabeçalho Bearer.
+- A interface exige confirmação explícita antes de cada publicação.
+- Para postagens locais, a imagem precisa estar acessível publicamente por HTTPS. O texto é enviado como postagem padrão (`STANDARD`).
+
 ## Ferramentas MCP
 
 - `list_locations`: lista todas as fichas acessíveis.
