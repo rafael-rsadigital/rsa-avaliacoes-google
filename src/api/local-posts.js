@@ -1,3 +1,4 @@
+import { getGoogleAccessToken, safeEqual } from "../lib/google.js";
 import { resolveGoogleLocationName } from "../lib/resolve-google-location.js";
 
 const ACTIONS = new Set(["BOOK","ORDER","SHOP","LEARN_MORE","SIGN_UP","CALL"]);
@@ -24,11 +25,13 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
-  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  const accountKey = req.body?.accountKey;
+  const bearerToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   const { locationName, sourceUrl, summary, callToAction, scheduledTime } = req.body || {};
   const text = typeof summary === "string" ? summary.trim() : "";
 
-  if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
+  if (accountKey && (!process.env.GOOGLE_CONNECT_SECRET || !safeEqual(req.body?.key, process.env.GOOGLE_CONNECT_SECRET))) return res.status(401).json({ message: "Chave administrativa inválida para esta conta Google." });
+  if (!accountKey && !bearerToken) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
   if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "") && !/^locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!text || text.length > 1500) return res.status(400).json({ message: "O texto da atualização deve ter entre 1 e 1.500 caracteres." });
@@ -64,6 +67,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const token = accountKey ? await getGoogleAccessToken(accountKey) : bearerToken;
     const resolvedLocationName = await resolveGoogleLocationName(token, locationName);
     const response = await fetch("https://mybusiness.googleapis.com/v4/" + resolvedLocationName + "/localPosts", {
       method: "POST",

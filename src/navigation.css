@@ -115,3 +115,98 @@
  .company-actions{align-items:stretch}
  .company-actions .btn{width:100%}
 }
+
+
+/* Contas Google */
+.accounts-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.accounts-access{display:flex;gap:10px;margin:22px 0 12px}
+.accounts-access input{flex:1;min-width:0;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:12px 14px;color:var(--text);font:13px "DM Sans";outline:none}
+.accounts-access input:focus{border-color:var(--gold)}
+.accounts-message{font-size:12px;color:var(--muted);line-height:1.5;margin:12px 0}
+.accounts-message.is-error{color:#ffb6bd}
+.accounts-message.is-success{color:#8cddb8}
+.accounts-footer{display:flex;align-items:center;gap:12px;margin:16px 0 20px}
+.accounts-footer span{font-size:11px;color:var(--muted)}
+.accounts-list{display:grid;gap:11px}
+.account-card{background:#101d2e;border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px}
+.account-card .company-info h3{font:700 15px Manrope;margin:0 0 6px}
+.account-card .company-info p{font-size:12px;color:var(--muted);margin:0}
+.account-status{font-size:11px;white-space:nowrap}
+.account-status.is-connected{color:var(--green)}
+.account-status.is-error{color:#ff9aa4}
+.account-error{grid-column:1/-1;color:#ffb6bd;font-size:12px;margin:0}
+.account-locations{grid-column:1/-1;border-top:1px solid var(--line);padding-top:11px}
+.account-locations summary{font-size:12px;color:#e4c36f;cursor:pointer}
+.account-locations ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px}
+.account-locations li{display:grid;gap:3px;font-size:12px}
+.account-locations li span{color:var(--muted)}
+@media(max-width:600px){
+ .accounts-panel{padding:17px}
+ .accounts-access{flex-direction:column}
+ .accounts-footer{align-items:flex-start;flex-direction:column}
+ .account-card{grid-template-columns:1fr}
+ .account-status{white-space:normal}
+}
+
+
+/* Auditoria e SEO local */
+.audit-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.audit-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin:22px 0 12px}
+.audit-results{margin-top:18px}
+.audit-score{display:flex;align-items:center;gap:12px;background:#101d2e;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:18px}
+.audit-score strong{font:800 25px Manrope;color:var(--gold)}
+.audit-score span{font-size:12px;color:var(--muted)}
+.audit-company-title{font:700 18px Manrope;margin:0 0 5px}
+.audit-meta{font-size:12px;color:var(--muted);margin:0 0 15px}
+.audit-checks{display:grid;gap:9px}
+.audit-check{display:flex;gap:11px;align-items:flex-start;background:#101d2e;border:1px solid var(--line);border-radius:10px;padding:12px}
+.audit-check-mark{width:23px;height:23px;display:grid;place-items:center;flex:0 0 23px;border-radius:50%;font-weight:800;font-size:13px}
+.audit-check.is-ok .audit-check-mark{background:#153b30;color:#80d9b0}
+.audit-check.is-missing .audit-check-mark{background:#412b30;color:#ffb2b8}
+.audit-check strong{font-size:12px}
+.audit-check p{font-size:12px;line-height:1.5;color:var(--muted);margin:4px 0 0;overflow-wrap:anywhere}
+.audit-disclaimer{font-size:11px;line-height:1.5;color:var(--muted);margin:14px 0 0}
+@media(max-width:700px){.audit-controls{grid-template-columns:1fr}.audit-panel{padding:17px}}
+
+
+/* Relatórios */
+.reports-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.reports-controls{display:grid;grid-template-columns:1.2fr 1.2fr .8fr .8fr auto;gap:9px;margin:22px 0 10px}
+.reports-date{min-width:0;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:11px;color:var(--text);font:12px "DM Sans"}
+.reports-presets{display:flex;gap:8px;margin:10px 0}
+.reports-presets .btn{font-size:11px;padding:8px 11px}
+.reports-results{margin-top:20px}
+.reports-metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.report-metric{background:#101d2e;border:1px solid var(--line);border-radius:12px;padding:15px;min-width:0}
+.report-metric strong{display:block;font:800 24px Manrope;color:var(--gold);overflow-wrap:anywhere}
+.report-metric span{display:block;font-size:11px;line-height:1.4;color:var(--muted);margin-top:6px}
+.reports-chart-title{font:700 15px Manrope;margin:22px 0 12px}
+.reports-bars{height:150px;display:flex;align-items:flex-end;gap:3px;padding:10px 8px 0;background:#101d2e;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.reports-bar-column{height:100%;flex:1;min-width:2px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}
+.reports-bar{width:100%;max-width:14px;min-height:2px;background:linear-gradient(180deg,#e3b64d,#a77b24);border-radius:3px 3px 0 0}
+.reports-bar-column span{font-size:8px;color:var(--muted)}
+.reports-details{margin-top:16px;background:#101d2e;border:1px solid var(--line);border-radius:10px;padding:12px}
+.reports-details summary{font-size:12px;color:#e4c36f;cursor:pointer}
+.reports-details ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.reports-details li{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+.reports-details li strong{color:var(--text)}
+@media(max-width:900px){.reports-controls{grid-template-columns:1fr 1fr}.reports-controls .btn{grid-column:1/-1}}
+@media(max-width:600px){.reports-panel{padding:17px}.reports-controls{grid-template-columns:1fr}.reports-metrics-grid{grid-template-columns:1fr 1fr}.report-metric strong{font-size:21px}}
+
+
+/* Criar empresa */
+.create-company-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.create-company-warning{font-size:12px;line-height:1.55;color:#f1d18a;background:#332d20;border:1px solid #66532c;border-radius:10px;padding:12px 14px;margin:18px 0}
+.create-company-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}
+.create-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.create-field>span{font-size:12px;font-weight:700;color:#dce5ef}
+.create-field input,.create-field textarea,.create-field select{width:100%;min-width:0;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:12px;color:var(--text);font:13px "DM Sans";outline:none}
+.create-field input:focus,.create-field textarea:focus,.create-field select:focus{border-color:var(--gold)}
+.create-field textarea{min-height:100px;resize:vertical;line-height:1.5}
+.create-field-wide{grid-column:1/-1}
+.create-category-row{display:flex;gap:8px}
+.create-category-row input{flex:1}
+.create-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:8px}
+.create-company-result{margin-top:12px}
+.create-preview{padding:13px 14px;background:#122b2a;border:1px solid #28664f;border-radius:10px;color:#cde8dc;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:650px){.create-company-panel{padding:17px}.create-company-form{grid-template-columns:1fr}.create-field-wide{grid-column:auto}.create-category-row{flex-direction:column}.create-actions{flex-direction:column}.create-actions .btn{width:100%}}

@@ -1,16 +1,22 @@
+import { getGoogleAccessToken, safeEqual } from "../lib/google.js";
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
-  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  const accountKey = req.body?.accountKey;
   const suppliedLocationName = req.body?.locationName;
+  const bearerToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
 
-  if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
+  if (accountKey && (!process.env.GOOGLE_CONNECT_SECRET || !safeEqual(req.body?.key, process.env.GOOGLE_CONNECT_SECRET))) {
+    return res.status(401).json({ message: "Chave administrativa inválida para esta conta Google." });
+  }
+  if (!accountKey && !bearerToken) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
   if (!suppliedLocationName || typeof suppliedLocationName !== "string") {
     return res.status(400).json({ message: "Ficha inválida." });
   }
 
   try {
+    const token = accountKey ? await getGoogleAccessToken(accountKey) : bearerToken;
     let locationName = suppliedLocationName;
 
     // A Business Information API returns locations/{id}, while the Reviews API
