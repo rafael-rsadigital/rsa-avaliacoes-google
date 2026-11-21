@@ -208,8 +208,10 @@ async function createLocation(body) {
   const requestId = /^[0-9a-f-]{36}$/i.test(body.requestId || "") ? body.requestId : randomUUID();
 
   if (!accountKey || !/^accounts\/[A-Za-z0-9_-]+$/.test(parent)) return { status: 400, data: { message: "Selecione a conta Google responsável pela nova ficha." } };
-  if (title.length < 2 || !/^categories\/[A-Za-z0-9:_-]+$/.test(categoryName) || !street || !city || !state || !postalCode) {
-    return { status: 400, data: { message: "Preencha nome, categoria oficial do Google e endereço completo." } };
+  const serviceOnly = businessType === "CUSTOMER_LOCATION_ONLY";
+  const hasServiceArea = businessType !== "STORE_FRONT";
+  if (title.length < 2 || !/^categories\/[A-Za-z0-9:_-]+$/.test(categoryName) || (!serviceOnly && (!street || !city || !state || !postalCode)) || (hasServiceArea && !serviceAreaPlaceIds.length)) {
+    return { status: 400, data: { message: serviceOnly ? "Informe nome, categoria oficial e ao menos um Place ID válido da área atendida." : hasServiceArea ? "Preencha o endereço comercial e ao menos um Place ID da área atendida." : "Preencha nome, categoria oficial do Google e endereço completo." } };
   }
   if (phone && phone.length < 8) return { status: 400, data: { message: "Confira o telefone informado." } };
   if (website) {
