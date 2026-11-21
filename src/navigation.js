@@ -23,11 +23,11 @@
       <button class="app-nav-link" type="button" data-view="reviews"><span class="app-nav-icon">☆</span>Avaliações<span class="app-nav-meta">Ativo</span></button>
       <button class="app-nav-link" type="button" data-view="publications"><span class="app-nav-icon">▧</span>Publicações<span class="app-nav-meta">Ativo</span></button>
       <div class="app-nav-label">Inteligência</div>
-      <button class="app-nav-link" type="button" data-view="reports"><span class="app-nav-icon">▥</span>Relatórios<span class="app-nav-meta">Em breve</span></button>
-      <button class="app-nav-link" type="button" data-view="audit"><span class="app-nav-icon">✓</span>Auditoria e SEO<span class="app-nav-meta">Em breve</span></button>
+      <button class="app-nav-link" type="button" data-view="reports"><span class="app-nav-icon">▥</span>Relatórios</button>
+      <button class="app-nav-link" type="button" data-view="audit"><span class="app-nav-icon">✓</span>Auditoria e SEO</button>
       <div class="app-nav-label">Configuração</div>
-      <button class="app-nav-link" type="button" data-view="create"><span class="app-nav-icon">＋</span>Criar empresa<span class="app-nav-meta">Em breve</span></button>
-      <button class="app-nav-link" type="button" data-view="accounts"><span class="app-nav-icon">⚙</span>Contas Google<span class="app-nav-meta">Em breve</span></button>
+      <button class="app-nav-link" type="button" data-view="create"><span class="app-nav-icon">＋</span>Criar empresa</button>
+      <button class="app-nav-link" type="button" data-view="accounts"><span class="app-nav-icon">⚙</span>Contas Google</button>
     </nav>
     <div class="app-sidebar-foot">Ferramentas oficiais do Google<br>Ambiente RSA Digital</div>`;
   const content = document.createElement("div");
@@ -83,7 +83,7 @@
       <article class="nav-dashboard-card"><h3>Empresas</h3><p id="navCompanySummary">Conecte uma conta Google para carregar as fichas disponíveis.</p><button class="btn secondary" type="button" data-go="companies">Ver empresas</button></article>
       <article class="nav-dashboard-card"><h3>Avaliações</h3><p>Consulte avaliações, identifique pendências e publique respostas com aprovação.</p><button class="btn secondary" type="button" data-go="reviews">Abrir avaliações</button></article>
       <article class="nav-dashboard-card"><h3>Publicações Google</h3><p>Envie fotos à galeria e publique ou programe atualizações com imagem.</p><button class="btn secondary" type="button" data-go="publications">Abrir publicações</button></article>
-      <article class="nav-dashboard-card"><h3>Próximos módulos</h3><p>Relatórios de desempenho, auditoria da ficha e cadastro de novas empresas serão adicionados em etapas separadas.</p><button class="btn secondary" type="button" data-go="reports">Ver planejamento</button></article>
+      <article class="nav-dashboard-card"><h3>Ferramentas de gestão</h3><p>Organize as contas Google, acompanhe o desempenho e analise a qualidade das fichas em um só lugar.</p><button class="btn secondary" type="button" data-go="accounts">Gerenciar contas</button></article>
     </div>`;
   const placeholder = document.createElement("section");
   placeholder.className = "nav-placeholder nav-section-hidden";
