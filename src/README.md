@@ -7,8 +7,23 @@ Aplicação para consultar avaliações do Google Business Profile e publicar re
 - Central web existente: OAuth online no navegador, consulta e publicação manual.
 - MCP remoto: `/api/mcp`, com autenticação Bearer.
 - OAuth Google offline: `/api/google/connect` e `/api/google/callback`.
-- Supabase: guarda somente o refresh token Google criptografado com AES-256-GCM.
+- Supabase: guarda refresh tokens Google criptografados com AES-256-GCM.
 - Vercel: executa as rotas e mantém os segredos do servidor.
+
+## Múltiplas contas Google
+
+A conexão Google usada pela MCP agora aceita várias contas:
+
+1. Abra `https://rsa-avaliacoes-google.vercel.app/api/google/connect`.
+2. Informe a chave `GOOGLE_CONNECT_SECRET` e um rótulo para identificar a conta (ex.: "Gmail Mcqueen").
+3. Autorize no Google a conta que gerencia as fichas desejadas.
+4. Repita o processo para cada Gmail adicional. A conexão principal existente é preservada.
+
+No Claude, chame `list_google_accounts` para obter os identificadores `accountKey`. A ferramenta `list_locations` lista fichas de todas as contas e informa `accountKey` e `accountLabel` em cada resultado. `list_unanswered_reviews` também devolve esses campos; ao publicar, preserve o `accountKey` correspondente em cada item de `publish_replies`.
+
+Se houver uma conta marcada como principal, chamadas antigas sem `accountKey` continuam usando essa conta. Se não houver conta principal e existir apenas uma conexão, ela será selecionada automaticamente. Com várias contas e sem principal, informe o `accountKey`.
+
+**Importante:** o Bearer `MCP_API_KEY` continua sendo a chave de acesso geral do servidor. Todas as contas conectadas ficam disponíveis para quem possuir essa chave. Esta versão atende ao uso pessoal/da equipe RSA Digital; antes de oferecer acesso separado a clientes, será necessário implementar credenciais MCP individuais e isolamento por cliente.
 
 ## Publicações no Google
 
@@ -22,61 +37,42 @@ A central web também permite publicar imagens usando links públicos HTTPS, sem
 
 ## Ferramentas MCP
 
-- `list_locations`: lista todas as fichas acessíveis.
-- `list_unanswered_reviews`: consulta avaliações pendentes em todas as fichas ou em uma ficha específica.
-- `publish_replies`: publica um lote de até 25 respostas, revalidando cada avaliação antes de publicar e pulando as que já receberam resposta.
+- `list_google_accounts`: lista as contas Google autorizadas e seus identificadores.
+- `list_locations`: lista fichas de todas as contas ou de uma conta específica.
+- `list_unanswered_reviews`: consulta avaliações pendentes em todas as contas ou em uma conta/ficha específica.
+- `publish_replies`: publica um lote de até 25 respostas, selecionando a conta indicada em cada item, revalidando cada avaliação e pulando as que já receberam resposta.
 
 A ferramenta de publicação deve ser chamada somente depois da aprovação explícita do usuário sobre o conteúdo do lote.
 
 ## Supabase
 
-Crie um projeto dedicado e execute `supabase/schema.sql` no SQL Editor. A tabela tem RLS habilitado e não concede acesso a `anon` ou `authenticated`; somente o backend usa a chave de serviço.
+Crie um projeto dedicado e execute `supabase/schema.sql` no SQL Editor. O script cria as tabelas com RLS habilitado, bloqueia acesso de `anon` e `authenticated` e concede acesso somente a `service_role`. A conexão original é copiada para a tabela multi-conta sem remover a tabela antiga.
 
 ## Variáveis de ambiente na Vercel (Production)
 
-Mantenha a variável existente:
+Mantenha as variáveis existentes:
 
 - `GOOGLE_CLIENT_ID`: OAuth Client ID já cadastrado.
-
-Adicione:
-
-- `GOOGLE_CLIENT_SECRET`: segredo do mesmo OAuth Client ID (Google Cloud Console).
+- `GOOGLE_CLIENT_SECRET`: segredo do mesmo OAuth Client ID.
 - `GOOGLE_REDIRECT_URI`: URL exata `https://rsa-avaliacoes-google.vercel.app/api/google/callback`.
-- `GOOGLE_CONNECT_SECRET`: senha longa para iniciar a conexão Google em `/api/google/connect`.
+- `GOOGLE_CONNECT_SECRET`: senha longa para iniciar a conexão Google.
 - `OAUTH_STATE_SECRET`: segredo aleatório longo usado para assinar o estado OAuth.
-- `TOKEN_ENCRYPTION_KEY`: chave base64 de exatamente 32 bytes para criptografar o refresh token.
+- `TOKEN_ENCRYPTION_KEY`: chave base64 de exatamente 32 bytes para criptografar os refresh tokens.
 - `SUPABASE_URL`: URL do projeto Supabase.
 - `SUPABASE_SERVICE_ROLE_KEY`: chave de serviço/secret do Supabase, somente no servidor.
 - `MCP_API_KEY`: segredo Bearer longo que protege o endpoint MCP.
 
-Gere valores aleatórios fortes para os quatro segredos locais com um gerenciador de senhas ou terminal. Exemplo em macOS/Linux:
-
-```bash
-openssl rand -hex 32
-openssl rand -base64 32
-```
-
-Use uma chave diferente para cada variável. Para `TOKEN_ENCRYPTION_KEY`, use a saída base64 de `openssl rand -base64 32`.
+Nenhuma variável nova é necessária para múltiplas contas.
 
 ## Google Cloud Console
 
-No OAuth Client ID do tipo Aplicativo da Web, adicione aos URIs de redirecionamento autorizados:
+No OAuth Client ID do tipo Aplicativo da Web, mantenha o URI de redirecionamento autorizado:
 
 ```
 https://rsa-avaliacoes-google.vercel.app/api/google/callback
 ```
 
 O escopo utilizado é `https://www.googleapis.com/auth/business.manage`. O fluxo solicita acesso offline e consentimento para obter refresh token.
-
-## Conectar a conta Google
-
-1. Configure todas as variáveis de ambiente acima na Vercel.
-2. Abra `https://rsa-avaliacoes-google.vercel.app/api/google/connect`.
-3. Informe o valor de `GOOGLE_CONNECT_SECRET` no formulário.
-4. Autorize a conta Google que gerencia as fichas.
-5. Confirme a página de sucesso.
-
-O refresh token é criptografado antes de ser enviado ao Supabase.
 
 ## Conectar o Claude
 
@@ -88,13 +84,14 @@ No Claude: Customize → Connectors → Add custom connector.
 - Cabeçalho: `Authorization`
 - Valor: `Bearer <MCP_API_KEY>`
 
-Ative o conector na conversa. O Claude poderá listar fichas, consultar avaliações e publicar respostas em lote após sua aprovação.
+Ative o conector na conversa. Consulte `list_google_accounts` para identificar as contas e use o `accountKey` retornado para operar na conta desejada.
 
 ## Segurança e operação
 
 - Nunca coloque `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_CLIENT_SECRET`, refresh token ou `MCP_API_KEY` no navegador ou no Git.
 - O endpoint MCP só aceita chamadas com o Bearer correto.
+- Os refresh tokens ficam criptografados no banco; cada conta possui um identificador e um rótulo.
 - A publicação reconsulta a avaliação para evitar responder novamente uma avaliação que já foi atendida.
-- Se o refresh token for revogado, refaça a autorização em `/api/google/connect`.
+- Se um refresh token for revogado, refaça a autorização daquela conta em `/api/google/connect`.
 - O projeto Vercel precisa permitir acesso público ao endpoint MCP. Se a proteção SSO/deployment protection estiver ativa no domínio `vercel.app`, o Claude não conseguirá alcançá-lo. Mantenha a proteção desativada apenas para este projeto e use a autenticação Bearer do MCP; não desative proteções de outros projetos.
 - O diretório raiz da Vercel deve continuar como `src`.
