@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
   const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  const { locationName, sourceUrl, summary, callToAction } = req.body || {};
+  const { locationName, sourceUrl, summary, callToAction, scheduledTime } = req.body || {};
   const text = typeof summary === "string" ? summary.trim() : "";
 
   if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
@@ -33,12 +33,25 @@ export default async function handler(req, res) {
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!text || text.length > 1500) return res.status(400).json({ message: "O texto da atualização deve ter entre 1 e 1.500 caracteres." });
 
+  let normalizedScheduledTime = null;
+  if (scheduledTime !== undefined && scheduledTime !== null && scheduledTime !== "") {
+    const parsedSchedule = new Date(scheduledTime);
+    if (typeof scheduledTime !== "string" || Number.isNaN(parsedSchedule.getTime())) {
+      return res.status(400).json({ message: "Informe uma data e horário válidos para o agendamento." });
+    }
+    if (parsedSchedule.getTime() <= Date.now()) {
+      return res.status(400).json({ message: "A data e o horário do agendamento precisam estar no futuro." });
+    }
+    normalizedScheduledTime = parsedSchedule.toISOString();
+  }
+
   const post = {
     languageCode: "pt-BR",
     summary: text,
     topicType: "STANDARD",
     media: [{ mediaFormat: "PHOTO", sourceUrl }]
   };
+  if (normalizedScheduledTime) post.scheduledTime = normalizedScheduledTime;
 
   if (callToAction) {
     if (!ACTIONS.has(callToAction.actionType)) return res.status(400).json({ message: "Tipo de botão inválido." });
@@ -60,7 +73,7 @@ export default async function handler(req, res) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return res.status(response.status).json({ message: data.error?.message || data.message || "O Google não conseguiu criar a atualização." });
-    return res.status(200).json({ success: true, post: data, message: "Atualização enviada ao Perfil da Empresa." });
+    return res.status(200).json({ success: true, post: data, message: normalizedScheduledTime ? "Atualização programada no Perfil da Empresa." : "Atualização publicada no Perfil da Empresa." });
   } catch (error) {
     return res.status(500).json({ message: error.message || "Erro ao criar atualização." });
   }
