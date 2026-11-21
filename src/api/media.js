@@ -1,3 +1,4 @@
+import { getGoogleAccessToken, safeEqual } from "../lib/google.js";
 import { resolveGoogleLocationName } from "../lib/resolve-google-location.js";
 
 const CATEGORIES = new Set(["ADDITIONAL","EXTERIOR","INTERIOR","PRODUCT","AT_WORK","FOOD_AND_DRINK","MENU","COMMON_AREA","ROOMS","TEAMS"]);
@@ -17,14 +18,17 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
-  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  const accountKey = req.body?.accountKey;
+  const bearerToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   const { locationName, sourceUrl, category = "ADDITIONAL" } = req.body || {};
-  if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
+  if (accountKey && (!process.env.GOOGLE_CONNECT_SECRET || !safeEqual(req.body?.key, process.env.GOOGLE_CONNECT_SECRET))) return res.status(401).json({ message: "Chave administrativa inválida para esta conta Google." });
+  if (!accountKey && !bearerToken) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
   if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "") && !/^locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!CATEGORIES.has(category)) return res.status(400).json({ message: "Categoria de foto inválida." });
 
   try {
+    const token = accountKey ? await getGoogleAccessToken(accountKey) : bearerToken;
     const resolvedLocationName = await resolveGoogleLocationName(token, locationName);
     const response = await fetch("https://mybusiness.googleapis.com/v4/" + resolvedLocationName + "/media", {
       method: "POST",
