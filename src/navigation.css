@@ -167,3 +167,28 @@
 .audit-check p{font-size:12px;line-height:1.5;color:var(--muted);margin:4px 0 0;overflow-wrap:anywhere}
 .audit-disclaimer{font-size:11px;line-height:1.5;color:var(--muted);margin:14px 0 0}
 @media(max-width:700px){.audit-controls{grid-template-columns:1fr}.audit-panel{padding:17px}}
+
+
+/* Relatórios */
+.reports-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.reports-controls{display:grid;grid-template-columns:1.2fr 1.2fr .8fr .8fr auto;gap:9px;margin:22px 0 10px}
+.reports-date{min-width:0;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:11px;color:var(--text);font:12px "DM Sans"}
+.reports-presets{display:flex;gap:8px;margin:10px 0}
+.reports-presets .btn{font-size:11px;padding:8px 11px}
+.reports-results{margin-top:20px}
+.reports-metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.report-metric{background:#101d2e;border:1px solid var(--line);border-radius:12px;padding:15px;min-width:0}
+.report-metric strong{display:block;font:800 24px Manrope;color:var(--gold);overflow-wrap:anywhere}
+.report-metric span{display:block;font-size:11px;line-height:1.4;color:var(--muted);margin-top:6px}
+.reports-chart-title{font:700 15px Manrope;margin:22px 0 12px}
+.reports-bars{height:150px;display:flex;align-items:flex-end;gap:3px;padding:10px 8px 0;background:#101d2e;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.reports-bar-column{height:100%;flex:1;min-width:2px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}
+.reports-bar{width:100%;max-width:14px;min-height:2px;background:linear-gradient(180deg,#e3b64d,#a77b24);border-radius:3px 3px 0 0}
+.reports-bar-column span{font-size:8px;color:var(--muted)}
+.reports-details{margin-top:16px;background:#101d2e;border:1px solid var(--line);border-radius:10px;padding:12px}
+.reports-details summary{font-size:12px;color:#e4c36f;cursor:pointer}
+.reports-details ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.reports-details li{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+.reports-details li strong{color:var(--text)}
+@media(max-width:900px){.reports-controls{grid-template-columns:1fr 1fr}.reports-controls .btn{grid-column:1/-1}}
+@media(max-width:600px){.reports-panel{padding:17px}.reports-controls{grid-template-columns:1fr}.reports-metrics-grid{grid-template-columns:1fr 1fr}.report-metric strong{font-size:21px}}
