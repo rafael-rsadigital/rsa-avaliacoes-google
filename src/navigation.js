@@ -7,6 +7,8 @@
   if (!wrap || !header || !main || wrap.dataset.navigationReady === "true") return;
   wrap.dataset.navigationReady = "true";
 
+  let adminAccessKey = "";
+
   const sidebar = document.createElement("aside");
   sidebar.className = "app-sidebar";
   sidebar.innerHTML = `
@@ -330,6 +332,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || "Não foi possível consultar as contas.");
+        adminAccessKey = secret;
         const accounts = data.accounts || [];
         message.className = "accounts-message is-success";
         message.textContent = accounts.length
