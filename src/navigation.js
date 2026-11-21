@@ -30,8 +30,39 @@
     <div class="app-sidebar-foot">Ferramentas oficiais do Google<br>Ambiente RSA Digital</div>`;
   const content = document.createElement("div");
   content.className = "app-content";
+  const menuToggle = document.createElement("button");
+  menuToggle.className = "nav-menu-toggle";
+  menuToggle.type = "button";
+  menuToggle.setAttribute("aria-label", "Abrir menu");
+  menuToggle.setAttribute("aria-expanded", "false");
+  menuToggle.innerHTML = "☰";
+  const backdrop = document.createElement("div");
+  backdrop.className = "nav-menu-backdrop";
+  backdrop.setAttribute("aria-hidden", "true");
   wrap.insertBefore(sidebar, header);
+  document.body.appendChild(backdrop);
   wrap.appendChild(content);
+  header.insertBefore(menuToggle, header.firstChild);
+
+  function closeMenu() {
+    sidebar.classList.remove("is-open");
+    backdrop.classList.remove("is-visible");
+    document.body.classList.remove("nav-menu-lock");
+    menuToggle.setAttribute("aria-expanded", "false");
+    menuToggle.setAttribute("aria-label", "Abrir menu");
+    menuToggle.innerHTML = "☰";
+  }
+  function openMenu() {
+    sidebar.classList.add("is-open");
+    backdrop.classList.add("is-visible");
+    document.body.classList.add("nav-menu-lock");
+    menuToggle.setAttribute("aria-expanded", "true");
+    menuToggle.setAttribute("aria-label", "Fechar menu");
+    menuToggle.innerHTML = "×";
+  }
+  menuToggle.addEventListener("click", () => sidebar.classList.contains("is-open") ? closeMenu() : openMenu());
+  backdrop.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", event => { if (event.key === "Escape") closeMenu(); });
   [header, main, footer].filter(Boolean).forEach(node => content.appendChild(node));
 
   const title = main.querySelector("h1");
@@ -125,7 +156,10 @@
     updateCompanySummary();
   }
 
-  sidebar.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+  sidebar.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => {
+    setView(button.dataset.view);
+    if (window.matchMedia("(max-width: 900px)").matches) closeMenu();
+  }));
   dashboard.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => {
     const target = button.dataset.go;
     const navButton = sidebar.querySelector('[data-view="' + target + '"]');
