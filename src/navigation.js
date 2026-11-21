@@ -532,7 +532,9 @@
         postalCode: postal.value.trim(),
         phone: phone.value.trim(),
         website: website.value.trim(),
-        description: businessDescription.value.trim()
+        description: businessDescription.value.trim(),
+        businessType: businessType.value,
+        serviceAreaPlaceIds: serviceAreaPlaceIds.value.split(/[\n,;]+/).map(value => value.trim()).filter(Boolean)
       };
     }
 
@@ -755,7 +757,8 @@
       BUSINESS_IMPRESSIONS_MOBILE_SEARCH: "Visualizações na Pesquisa (celular)",
       WEBSITE_CLICKS: "Cliques no site",
       CALL_CLICKS: "Cliques para ligar",
-      BUSINESS_DIRECTION_REQUESTS: "Solicitações de rota"
+      BUSINESS_DIRECTION_REQUESTS: "Solicitações de rota",
+      MESSAGING_CLICKS: "Cliques em mensagens"
     };
     const total = values => values.reduce((sum, item) => sum + Number(item.value || 0), 0);
     function metricCard(label, value) {
@@ -810,7 +813,7 @@
         const impressions = impressionsNames.reduce((sum, name) => sum + total(byName[name]?.values || []), 0);
         const website = total(byName.WEBSITE_CLICKS?.values || []);
         const calls = total(byName.CALL_CLICKS?.values || []);
-        const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);
+        const directions = total(byName.BUSINESS_DIRECTION_REQUESTS?.values || []);\n        const messages = total(byName.MESSAGING_CLICKS?.values || []);
         const cards = document.createElement("div");
         cards.className = "reports-metrics-grid";
         cards.append(
@@ -866,6 +869,54 @@
         });
         detail.append(list);
         results.append(detail);
+
+        const keywordHeading = document.createElement("h3");
+        keywordHeading.className = "reports-chart-title";
+        keywordHeading.textContent = "Termos que encontraram a empresa";
+        results.append(keywordHeading);
+        const keywordNote = document.createElement("p");
+        keywordNote.className = "audit-disclaimer";
+        keywordNote.textContent = "O Google disponibiliza estas buscas agrupadas por mês, não por dia. A consulta considera os meses abrangidos pelo período selecionado.";
+        results.append(keywordNote);
+        const keywordStatus = document.createElement("p");
+        keywordStatus.className = "reports-keyword-status";
+        keywordStatus.textContent = "Consultando palavras-chave…";
+        results.append(keywordStatus);
+        try {
+          const keywordResponse = await fetch("/api/google/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "search-keywords",
+              key: adminAccessKey,
+              accountKey: accountSelect.value,
+              locationId: locationSelect.value,
+              startDate: start.value,
+              endDate: end.value
+            })
+          });
+          const keywordData = await keywordResponse.json().catch(() => ({}));
+          if (!keywordResponse.ok) throw new Error(keywordData.message || "Falha ao consultar palavras-chave.");
+          keywordStatus.textContent = keywordData.error || (keywordData.keywords?.length ? keywordData.keywords.length + " termos encontrados." : "O Google não retornou termos para os meses selecionados.");
+          if (keywordData.keywords?.length) {
+            const keywordList = document.createElement("div");
+            keywordList.className = "reports-keyword-list";
+            keywordData.keywords.forEach(item => {
+              const row = document.createElement("div");
+              row.className = "reports-keyword-row";
+              const term = document.createElement("span");
+              term.textContent = item.keyword;
+              const count = document.createElement("strong");
+              count.textContent = item.value != null ? item.value.toLocaleString("pt-BR") : item.threshold != null ? "Menos de " + item.threshold.toLocaleString("pt-BR") : "—";
+              row.append(term, count);
+              keywordList.append(row);
+            });
+            results.append(keywordList);
+          }
+        } catch (keywordError) {
+          keywordStatus.textContent = "Palavras-chave indisponíveis: " + keywordError.message;
+        }
+
         status.className = failed.length ? "accounts-message" : "accounts-message is-success";
         status.textContent = failed.length
           ? "Relatório parcial: " + available.length + " de " + metrics.length + " métricas disponíveis. Métricas indisponíveis podem exigir habilitação ou cota da API."
