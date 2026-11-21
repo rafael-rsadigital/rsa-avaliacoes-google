@@ -309,7 +309,7 @@
 
     const warning = document.createElement("p");
     warning.className = "create-company-warning";
-    warning.textContent = "A criação não garante publicação imediata. O Google pode exigir uma etapa de verificação para liberar a ficha na Pesquisa e no Maps. Esta versão cadastra empresas com endereço físico.";
+    warning.textContent = "A criação não garante publicação imediata. O Google pode exigir verificação. Para empresas que atendem no endereço do cliente, informe os Place IDs das cidades ou regiões atendidas; o endereço de verificação será tratado pelo Google."
     section.append(warning);
 
     const form = document.createElement("div");
@@ -337,11 +337,45 @@
     accountLabel.textContent = "Conta Google *";
     accountWrap.append(accountLabel, account);
     form.append(accountWrap);
+    const businessTypeWrap = document.createElement("label");
+    businessTypeWrap.className = "create-field create-field-wide";
+    const businessTypeLabel = document.createElement("span");
+    businessTypeLabel.textContent = "Como a empresa atende? *";
+    const businessType = document.createElement("select");
+    businessType.className = "companies-search";
+    businessType.innerHTML = '<option value="STORE_FRONT">Atende clientes no próprio endereço</option><option value="CUSTOMER_AND_BUSINESS_LOCATION">Atende no endereço e também no local do cliente</option><option value="CUSTOMER_LOCATION_ONLY">Atende somente no endereço do cliente (sem receber público)</option>';
+    businessTypeWrap.append(businessTypeLabel, businessType);
+    form.append(businessTypeWrap);
     const name = field("Nome da empresa", "text", "Nome que será exibido no Google", true, 100);
     const street = field("Endereço / rua e número", "text", "Rua, avenida e número", true, 200);
     const city = field("Cidade", "text", "Cidade", true, 100);
     const state = field("Estado (UF)", "text", "Ex.: SP", true, 80);
     const postal = field("CEP", "text", "00000-000", true, 20);
+    const serviceAreaWrap = document.createElement("label");
+    serviceAreaWrap.className = "create-field create-field-wide";
+    serviceAreaWrap.hidden = true;
+    const serviceAreaLabel = document.createElement("span");
+    serviceAreaLabel.textContent = "Place IDs das cidades/regiões atendidas *";
+    const serviceAreaPlaceIds = document.createElement("textarea");
+    serviceAreaPlaceIds.rows = 3;
+    serviceAreaPlaceIds.maxLength = 4000;
+    serviceAreaPlaceIds.placeholder = "Um Place ID por linha (ex.: ChIJ...)";
+    const serviceAreaHelp = document.createElement("small");
+    serviceAreaHelp.textContent = "Use Place IDs do Google Maps, não apenas nomes de cidades. É possível informar até 20 áreas, uma por linha.";
+    serviceAreaWrap.append(serviceAreaLabel, serviceAreaPlaceIds, serviceAreaHelp);
+    form.append(serviceAreaWrap);
+    function updateBusinessTypeFields() {
+      const serviceOnly = businessType.value === "CUSTOMER_LOCATION_ONLY";
+      const hasServiceArea = businessType.value !== "STORE_FRONT";
+      [street, city, state, postal].forEach(input => {
+        input.closest("label").hidden = serviceOnly;
+        input.required = !serviceOnly;
+      });
+      serviceAreaWrap.hidden = !hasServiceArea;
+      serviceAreaPlaceIds.required = hasServiceArea;
+    }
+    businessType.addEventListener("change", updateBusinessTypeFields);
+    updateBusinessTypeFields();
     const phone = field("Telefone", "tel", "(00) 00000-0000", false, 40);
     const website = field("Site (HTTPS)", "url", "https://www.empresa.com.br", false, 300);
     const businessDescription = document.createElement("textarea");
@@ -504,9 +538,11 @@
 
     validate.addEventListener("click", async () => {
       const payload = collectPayload();
-      if (!payload.accountKey || !payload.title || !payload.categoryName || !payload.street || !payload.city || !payload.state || !payload.postalCode) {
+      const serviceOnly = payload.businessType === "CUSTOMER_LOCATION_ONLY";
+      const hasServiceArea = payload.businessType !== "STORE_FRONT";
+      if (!payload.accountKey || !payload.title || !payload.categoryName || (!serviceOnly && (!payload.street || !payload.city || !payload.state || !payload.postalCode)) || (hasServiceArea && !payload.serviceAreaPlaceIds.length)) {
         status.className = "accounts-message is-error";
-        status.textContent = "Preencha os campos obrigatórios e selecione uma categoria oficial do Google.";
+        status.textContent = serviceOnly ? "Preencha os dados obrigatórios e informe ao menos um Place ID da área atendida." : hasServiceArea ? "Preencha o endereço comercial e informe os Place IDs das áreas atendidas." : "Preencha os campos obrigatórios e selecione uma categoria oficial do Google.";
         return;
       }
       if (busy) return;
@@ -529,7 +565,7 @@
         create.hidden = false;
         const preview = document.createElement("div");
         preview.className = "create-preview";
-        preview.textContent = payload.title + " · " + categorySelect.selectedOptions[0].textContent + " · " + [payload.street, payload.city, payload.state, payload.postalCode].filter(Boolean).join(", ");
+        preview.textContent = payload.title + " · " + categorySelect.selectedOptions[0].textContent + " · " + (serviceOnly ? "Atendimento no local do cliente" : [payload.street, payload.city, payload.state, payload.postalCode].filter(Boolean).join(", ")) + (hasServiceArea ? " · " + payload.serviceAreaPlaceIds.length + " área(s) atendida(s)" : "");
         result.append(preview);
       } catch (error) {
         validatedPayload = null;
