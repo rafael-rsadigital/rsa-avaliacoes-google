@@ -192,3 +192,21 @@
 .reports-details li strong{color:var(--text)}
 @media(max-width:900px){.reports-controls{grid-template-columns:1fr 1fr}.reports-controls .btn{grid-column:1/-1}}
 @media(max-width:600px){.reports-panel{padding:17px}.reports-controls{grid-template-columns:1fr}.reports-metrics-grid{grid-template-columns:1fr 1fr}.report-metric strong{font-size:21px}}
+
+
+/* Criar empresa */
+.create-company-panel{background:linear-gradient(145deg,rgba(23,38,58,.96),rgba(16,29,46,.96));border:1px solid var(--line);border-radius:15px;padding:24px}
+.create-company-warning{font-size:12px;line-height:1.55;color:#f1d18a;background:#332d20;border:1px solid #66532c;border-radius:10px;padding:12px 14px;margin:18px 0}
+.create-company-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}
+.create-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.create-field>span{font-size:12px;font-weight:700;color:#dce5ef}
+.create-field input,.create-field textarea,.create-field select{width:100%;min-width:0;background:#0b1726;border:1px solid #354960;border-radius:9px;padding:12px;color:var(--text);font:13px "DM Sans";outline:none}
+.create-field input:focus,.create-field textarea:focus,.create-field select:focus{border-color:var(--gold)}
+.create-field textarea{min-height:100px;resize:vertical;line-height:1.5}
+.create-field-wide{grid-column:1/-1}
+.create-category-row{display:flex;gap:8px}
+.create-category-row input{flex:1}
+.create-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:8px}
+.create-company-result{margin-top:12px}
+.create-preview{padding:13px 14px;background:#122b2a;border:1px solid #28664f;border-radius:10px;color:#cde8dc;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:650px){.create-company-panel{padding:17px}.create-company-form{grid-template-columns:1fr}.create-field-wide{grid-column:auto}.create-category-row{flex-direction:column}.create-actions{flex-direction:column}.create-actions .btn{width:100%}}
