@@ -6,7 +6,7 @@ function validPublicImageUrl(value) {
     if (url.protocol !== "https:" || !url.hostname || url.username || url.password) return false;
     const host = url.hostname.toLowerCase();
     if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return false;
-    if (/^(127\\.|10\\.|192\\.168\\.|169\\.254\\.)/.test(host) || /^172\\.(1[6-9]|2[0-9]|3[01])\\./.test(host)) return false;
+    if (/^(127\.|10\.|192\.168\.|169\.254\.)/.test(host) || /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host)) return false;
     return true;
   } catch { return false; }
 }
@@ -22,12 +22,12 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ message: "Método não permitido." });
 
-  const token = (req.headers.authorization || "").replace(/^Bearer\\s+/i, "");
+  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   const { locationName, sourceUrl, summary, callToAction } = req.body || {};
   const text = typeof summary === "string" ? summary.trim() : "";
 
   if (!token) return res.status(401).json({ message: "Conecte sua conta Google novamente." });
-  if (!/^accounts\\/[^/]+\\/locations\\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
+  if (!/^accounts\/[^/]+\/locations\/[^/]+$/.test(locationName || "")) return res.status(400).json({ message: "Ficha Google inválida." });
   if (!validPublicImageUrl(sourceUrl || "")) return res.status(400).json({ message: "Informe um link público HTTPS válido para a imagem." });
   if (!text || text.length > 1500) return res.status(400).json({ message: "O texto da atualização deve ter entre 1 e 1.500 caracteres." });
 
