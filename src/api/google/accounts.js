@@ -15,7 +15,17 @@ export default async function handler(req, res) {
     const result = await Promise.all(accounts.map(async (account) => {
       try {
         const token = await getGoogleAccessToken(account.id);
-        const locations = await listGoogleLocations(token);
+        const [locations, accountResponse] = await Promise.all([
+          listGoogleLocations(token),
+          fetch("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
+            headers: { Authorization: "Bearer " + token },
+            cache: "no-store"
+          }).then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error?.message || "Não foi possível listar as contas comerciais.");
+            return data.accounts || [];
+          })
+        ]);
         return {
           id: account.id,
           label: account.label,
@@ -23,6 +33,12 @@ export default async function handler(req, res) {
           updatedAt: account.updatedAt,
           status: "connected",
           locationCount: locations.length,
+          googleAccounts: accountResponse.map(item => ({
+            name: item.name,
+            accountName: item.accountName || "",
+            type: item.type || "",
+            role: item.role || ""
+          })),
           locations: locations.map((location) => ({
             name: location.name,
             locationId: location.locationId,
