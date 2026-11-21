@@ -56,6 +56,8 @@
 </div>
 <div id="postFields" class="hidden">
 <div class="field"><label for="pubSummary">Texto da atualização</label><textarea id="pubSummary" maxlength="1500" placeholder="Escreva o texto que acompanhará a imagem..."></textarea><span class="pub-help"><span id="pubCharCount">0</span>/1.500 caracteres · Tipo de postagem: Atualização padrão.</span></div>
+<div class="field"><label for="pubScheduleMode">Quando publicar?</label><select id="pubScheduleMode"><option value="now">Publicar agora</option><option value="schedule">Programar para outra data</option></select></div>
+<div class="field hidden" id="pubScheduleField"><label for="pubScheduledTime">Data e horário da publicação</label><input id="pubScheduledTime" type="datetime-local"><span class="pub-help">Escolha a data e o horário no seu fuso local.</span></div>
 <div class="field"><label for="pubCta">Botão (opcional)</label><select id="pubCta"><option value="">Sem botão</option><option value="LEARN_MORE">Saiba mais</option><option value="BOOK">Agendar</option><option value="ORDER">Fazer pedido</option><option value="SHOP">Comprar</option><option value="SIGN_UP">Inscrever-se</option><option value="CALL">Ligar</option></select></div>
 <div class="field hidden" id="pubCtaUrlField"><label for="pubCtaUrl">Link do botão (HTTPS)</label><input id="pubCtaUrl" type="url" placeholder="https://seusite.com.br"></div>
 </div>
@@ -84,7 +86,11 @@ function render(){const list=$("reviewsList");const filtered=filterMode==="pendi
 function showMainSection(section){const isReviews=section==="reviews";$("reviewsSection").classList.toggle("hidden",!isReviews);$("publicationsSection").classList.toggle("hidden",isReviews);$("reviewsTab").classList.toggle("active",isReviews);$("publicationsTab").classList.toggle("active",!isReviews);clearNotice()}
 $("reviewsTab").onclick=()=>showMainSection("reviews");
 $("publicationsTab").onclick=()=>showMainSection("publications");
-$("pubDestination").onchange=()=>{const post=$("pubDestination").value==="post";$("galleryFields").classList.toggle("hidden",post);$("postFields").classList.toggle("hidden",!post);$("pubResult").classList.add("hidden")};
+function updatePublicationMode(){const isPost=$("pubDestination").value==="post";const scheduled=isPost&&$("pubScheduleMode").value==="schedule";$("galleryFields").classList.toggle("hidden",isPost);$("postFields").classList.toggle("hidden",!isPost);$("pubScheduleField").classList.toggle("hidden",!scheduled);$("pubResult").classList.add("hidden");$("publishMediaBtn").textContent=scheduled?"Revisar e programar":"Revisar e publicar"}
+$("pubDestination").onchange=updatePublicationMode;
+$("pubScheduleMode").onchange=updatePublicationMode;
+function localDateTimeValue(date){const pad=n=>String(n).padStart(2,"0");return date.getFullYear()+"-"+pad(date.getMonth()+1)+"-"+pad(date.getDate())+"T"+pad(date.getHours())+":"+pad(date.getMinutes())}
+$("pubScheduledTime").min=localDateTimeValue(new Date(Date.now()+60000));
 $("pubImageUrl").oninput=()=>{const value=$("pubImageUrl").value.trim();const img=$("pubImagePreview");if(/^https:\/\//i.test(value)){img.src=value;$("pubImageHint").textContent=value}else{img.removeAttribute("src");$("pubImageHint").textContent="A prévia da imagem aparecerá aqui quando você inserir um link."}};
 $("pubSummary").oninput=()=>$("pubCharCount").textContent=String($("pubSummary").value.length);
 $("pubCta").onchange=()=>{const needsUrl=$("pubCta").value!==""&&$("pubCta").value!=="CALL";$("pubCtaUrlField").classList.toggle("hidden",!needsUrl)};
@@ -97,23 +103,27 @@ $("publishMediaBtn").onclick=async()=>{
   const summary=$("pubSummary").value.trim();
   const actionType=$("pubCta").value;
   const actionUrl=$("pubCtaUrl").value.trim();
+  const shouldSchedule=isPost&&$("pubScheduleMode").value==="schedule";
+  let scheduledTime=null;
+  if(shouldSchedule){const chosen=$("pubScheduledTime").value;if(!chosen){notice("Escolha a data e o horário da publicação.","error");$("pubScheduledTime").focus();return}const date=new Date(chosen);if(Number.isNaN(date.getTime())||date.getTime()<=Date.now()){notice("Escolha uma data e um horário futuros.","error");$("pubScheduledTime").focus();return}scheduledTime=date.toISOString()}
   if(isPost&&!summary){notice("Escreva o texto da atualização antes de continuar.","error");$("pubSummary").focus();return}
   if(isPost&&summary.length>1500){notice("O texto ultrapassa o limite de 1.500 caracteres.","error");return}
   if(isPost&&actionType&&actionType!=="CALL"){let parsed;try{parsed=new URL(actionUrl)}catch{}if(!parsed||parsed.protocol!=="https:"){notice("Informe um link HTTPS válido para o botão.","error");$("pubCtaUrl").focus();return}}
   const ctaLabel=actionType?$("pubCta").selectedOptions[0].textContent:"sem botão";
-  const confirmation="Confirma a publicação de "+(isPost?"uma atualização":"uma foto na galeria")+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\n\nTexto: "+summary+"\nBotão: "+ctaLabel:"\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+"\n\nEsta ação publicará o conteúdo no Perfil da Empresa Google.";
+  const scheduleLabel=shouldSchedule?"\nAgendada para: "+new Date(scheduledTime).toLocaleString("pt-BR"):"";
+  const confirmation="Confirma "+(shouldSchedule?"o agendamento de uma atualização": "a publicação de "+(isPost?"uma atualização":"uma foto na galeria"))+" para "+(selectedLocation.title||"a empresa selecionada")+"?"+(isPost?"\n\nTexto: "+summary+"\nBotão: "+ctaLabel:"\nCategoria: "+$("pubCategory").selectedOptions[0].textContent)+scheduleLabel+"\n\n"+(shouldSchedule?"O Google publicará o conteúdo na data e horário escolhidos.":"Esta ação publicará o conteúdo no Perfil da Empresa Google.");
   if(!confirm(confirmation))return;
   const button=$("publishMediaBtn");button.disabled=true;button.textContent="Publicando…";$("pubResult").classList.add("hidden");clearNotice();
   try{
     const result=isPost
-      ?await api("/api/local-posts",{locationName:selectedLocation.name,sourceUrl,summary,callToAction:actionType?{actionType,...(actionType==="CALL"?{}:{url:actionUrl})}:null})
+      ?await api("/api/local-posts",{locationName:selectedLocation.name,sourceUrl,summary,callToAction:actionType?{actionType,...(actionType==="CALL"?{}:{url:actionUrl})}:null,...(scheduledTime?{scheduledTime}:{})})
       :await api("/api/media",{locationName:selectedLocation.name,sourceUrl,category:$("pubCategory").value});
     const item=isPost?result.post:result.media;
     const link=item?.searchUrl||item?.googleUrl||"";
-    $("pubResult").textContent=(result.message||"Publicação concluída.")+(item?.name?"\nIdentificador Google: "+item.name:"")+(link?"\nLink: "+link:"");
+    $("pubResult").textContent=(result.message||"Publicação concluída.")+(item?.state?"\nStatus: "+(item.state==="SCHEDULED"?"Programada":item.state):"")+(item?.scheduledTime?"\nData programada: "+new Date(item.scheduledTime).toLocaleString("pt-BR"):"")+(item?.name?"\nIdentificador Google: "+item.name:"")+(link?"\nLink: "+link:"");
     $("pubResult").classList.remove("hidden");notice(result.message||"Publicação concluída no Google.","ok");
   }catch(error){notice(error.message||"Não foi possível publicar no Google.","error")}
-  finally{button.disabled=false;button.textContent="Revisar e publicar"}
+  finally{button.disabled=false;button.textContent=shouldSchedule?"Revisar e programar":"Revisar e publicar"}
 };
 
 document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{filterMode=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()});
